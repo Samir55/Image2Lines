@@ -12,3 +12,5 @@ We'll use Histogram approach for line segmentation, proposed in [this paper](htt
 * Repair the lines.
 ### II. Word Segmentation
 ### III. Char Segmentation
+
+We'll use GNU Octave at the beginning then we'll migrate to C++ and OpenCV.
