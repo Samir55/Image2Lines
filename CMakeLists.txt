@@ -6,7 +6,7 @@ find_package(OpenCV REQUIRED)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        main.cpp)
+        src/main.cpp)
 
 add_executable(Image2Char ${SOURCE_FILES})
 target_link_libraries(Image2Char ${OpenCV_LIBS})
