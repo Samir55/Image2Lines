@@ -1,3 +1,8 @@
-.idea/*
 .DS_Store
 cmake-build-debug/*
+.idea/*
+.idea/Image2Char.iml
+.idea/modules.xml
+.idea/workspace.xml
+CMakeLists.txt
+cmake-build-debug/
