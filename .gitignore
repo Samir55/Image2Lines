@@ -4,5 +4,4 @@ cmake-build-debug/*
 .idea/Image2Char.iml
 .idea/modules.xml
 .idea/workspace.xml
-CMakeLists.txt
 cmake-build-debug/
