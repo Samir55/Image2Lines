@@ -1,7 +1,3 @@
-//
-// Created by ASamir on 11/2/17.
-//
-
 #ifndef IMAGE2CHAR_UTILITIES_H_H
 #define IMAGE2CHAR_UTILITIES_H_H
 #include <iostream>
@@ -16,8 +12,9 @@
 #include <math.h>
 #include <cv.h>
 #include <highgui.h>
-#include <opencv2/imgcodecs.hpp>
+#include <opencv/cv.hpp>
 
-
+using namespace cv;
 using namespace std;
+
 #endif //IMAGE2CHAR_UTILITIES_H_H

@@ -6,8 +6,7 @@ find_package(OpenCV REQUIRED)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        src/main.cpp)
+        src/main.cpp src/LineSeg.cpp)
 
 add_executable(Image2Char ${SOURCE_FILES})
-include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(Image2Char ${OpenCV_LIBS})

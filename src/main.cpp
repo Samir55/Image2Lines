@@ -1,23 +1,7 @@
-#include <opencv/cv.hpp>
 #include "utilities.h"
 
-using namespace cv;
-
-/// Contour(Region) class represents a connected region in the image.
-class Contour {
-public:
-    int x, y;
-    ///< Position of top left pixel of this region.
-    vector<int> code_chain; ///< The code chain representation (8- neighbourhood).
-
-    ///
-    /// \param img
-    void generate_code_chain(cv::Mat &img) {
-        // Border tracing.
-    }
-};
-
-int main() {
+/// Debugging.
+void testing() {
     // Read image and convert it to greyscale.
     cv::Mat im_gray = cv::imread("../img/5circles.jpg",CV_LOAD_IMAGE_GRAYSCALE);
 
@@ -32,11 +16,10 @@ int main() {
     cv::threshold(filtered, img_bw, 0.0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
 
     cv::imwrite("img_bw.jpg", img_bw);
-
     vector<vector<Point>> contours;
     vector<Vec4i> hierarchy;
     findContours( img_bw, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE );
-      cout<< contours.size();
+    cout<< contours.size();
     // you could also reuse img1 here
     Mat mask = Mat::zeros(im_gray.rows, im_gray.cols, CV_8UC1);
 
@@ -68,6 +51,9 @@ int main() {
 //
 //    imshow( "Result window", img_bw );
 //    waitKey(0);
+}
+
+int main() {
     return 0;
 
 }
