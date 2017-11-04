@@ -16,6 +16,8 @@
 #include <math.h>
 #include <cv.h>
 #include <highgui.h>
+#include <opencv2/imgcodecs.hpp>
+
 
 using namespace std;
 #endif //IMAGE2CHAR_UTILITIES_H_H
