@@ -1,5 +1,6 @@
 // WIP Line Segmentation, To be later added to dedicated class.
 #include "utilities.h"
+#define CHUNKS_NUMBER 20
 
 vector<vector<Point>> contours; ///< Used as a temproray alternative to our generated contours.
 
@@ -18,15 +19,18 @@ public:
 };
 
 ///
-struct ImageChunk {
-    int start_col, end_col;
-    vector<int> contours_ids;
+struct Chunk {
+    cv::Mat img;
+    int order;
+    int start_col;
+    int width;
+    vector<Contour> contours;
 };
 
 ///
 /// \param img
 /// \return
-cv::Mat preprocess_img (const cv::Mat img) {
+cv::Mat preprocess(const cv::Mat img) {
     // More filters are about to be applied. TheAbzo job.
     cv::Mat preprocessed_img, smoothed_img;
 
@@ -42,14 +46,22 @@ cv::Mat preprocess_img (const cv::Mat img) {
 ///
 /// \param img
 /// \return
-vector<ImageChunk> get_img_chunks (cv::Mat img) {
+vector<Chunk> get_chunks(const cv::Mat img) {
+
     int width = img.cols;
-    int chunk_width = width / 20;
-    vector<ImageChunk> chunks(20);
-    for (int i_chunk = 0, start_pixel = 1; i_chunk < 20; ++i_chunk) { // ToDo @Samir55 Here check;
+    int chunk_width = width / CHUNKS_NUMBER;
+
+    vector<Chunk> chunks(CHUNKS_NUMBER);
+    for (int i_chunk = 0, start_pixel = 0; i_chunk < CHUNKS_NUMBER; ++i_chunk) {
+        chunks[i_chunk].order = i_chunk + 1;
         chunks[i_chunk].start_col = start_pixel;
-        chunks[i_chunk].end_col = start_pixel + chunk_width;
+        chunks[i_chunk].width = chunk_width;
+//        cout << chunk_width <<  " " << start_pixel << " " << img.rows << " " << img.cols << endl; // For debugging.
+        chunks[i_chunk].img = cv::Mat (img,
+                                       cv::Range( 0, img.rows ), // rows
+                                       cv::Range( start_pixel, start_pixel + chunk_width )); // cols
         start_pixel += chunk_width;
+//        cv::imwrite(to_string(i_chunk + 1) + ".jpg", chunks[i_chunk].img); // For debugging.
     }
     return chunks;
 }
