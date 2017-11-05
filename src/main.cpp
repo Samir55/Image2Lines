@@ -1,5 +1,5 @@
 #include "utilities.h"
-#include "LineSeg.hpp"
+#include "LineSegmenter.hpp"
 
 /// Debugging.
 void testing() {
@@ -58,9 +58,9 @@ int main() {
 
     cv:Mat img = imread("../img/1.png");
 
-    img = preprocess(img);
-
-    vector<Chunk> ret = get_chunks(img);
+//    img = preprocess(img);
+//
+//    vector<Chunk> ret = get_chunks(img);
 
 
     return 0;
