@@ -1,7 +1,7 @@
 #include "LineSegmenter.hpp"
 
 cv::Mat
-LineSegmenter::preprocess(const cv::Mat img)
+LineSegmenter::preprocess (const cv::Mat img)
 {
     // More filters are about to be applied. TheAbzo job.
     cv::Mat preprocessed_img, smoothed_img;
@@ -16,7 +16,7 @@ LineSegmenter::preprocess(const cv::Mat img)
 }
 
 vector<Chunk>
-LineSegmenter::get_chunks(const cv::Mat img)
+LineSegmenter::get_chunks (const cv::Mat img)
 {
 
     int width = img.cols;
@@ -32,30 +32,36 @@ LineSegmenter::get_chunks(const cv::Mat img)
                                       cv::Range(0, img.rows), // rows
                                       cv::Range(start_pixel, start_pixel + chunk_width)); // cols
         start_pixel += chunk_width;
-//        cv::imwrite(to_string(i_chunk + 1) + ".jpg", chunks[i_chunk].img); // For debugging.
+        cv::imwrite(to_string(i_chunk + 1) + ".jpg", chunks[i_chunk].img); // For debugging.
     }
     return chunks;
 }
 
 // ToDo @TheAbzo.
 void
-Chunk::find_contours()
+Chunk::find_contours ()
 {
     waitKey(0);
 }
 
 void
-Chunk::calculate_histogram()
+Chunk::calculate_histogram ()
 {
-    freopen("out.txt", "w", stdout);
+
+//    freopen("out.txt", "w", stdout);
+
+    // Get the smoothed profile by applying a meidan filter of size 5.
+    cv::Mat img_clone;
+    cv::medianBlur(this->img, img_clone, 5);
+
     // Assign the size of the hitogram // ToDo @Samir55 later add it to the constructor.
-    this->histogram.resize(this->img.rows);
+    this->histogram.resize(img_clone.rows);
 
     int count_black = 0; // ToDo @Samir: Remove as it's for debugging.
     int count_white = 0;
-    for (int i = 0; i < this->img.rows ; ++i) {
-        for (int j = 0; j < this->img.cols ; ++j) {
-            if (img.at<uchar>(i, j) == 0) {
+    for (int i = 0; i < img_clone.rows ; ++i) {
+        for (int j = 0; j < img_clone.cols ; ++j) {
+            if (img_clone.at<uchar>(i, j) == 0) {
                 count_black++;
                 this->histogram[i]++;
             }
@@ -64,8 +70,8 @@ Chunk::calculate_histogram()
     }
 
 //    cout << histogram.size() << " " << count_white << endl;
-    for (int i = 0; i < histogram.size(); i++)
-        cout << histogram[i] << ' ';
-    cout << endl;
+//    for (int i = 0; i < histogram.size(); i++)
+//        cout << histogram[i] << ' ';
+//    cout << endl;
 
 }
