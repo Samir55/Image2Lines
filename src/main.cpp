@@ -56,12 +56,15 @@ void testing() {
 
 int main() {
 
-    cv:Mat img = imread("../img/1.png");
+    cv:Mat img = imread("../img/2.png", CV_LOAD_IMAGE_GRAYSCALE);
 
-//    img = preprocess(img);
-//
-//    vector<Chunk> ret = get_chunks(img);
+    LineSegmenter line_segmenter;
 
+    img = line_segmenter.preprocess(img);
+
+    vector<Chunk> chunks = line_segmenter.get_chunks(img);
+
+    chunks[5].calculate_histogram();
 
     return 0;
 

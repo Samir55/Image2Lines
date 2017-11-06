@@ -1,6 +1,8 @@
 #include "LineSegmenter.hpp"
 
-cv::Mat LineSegmenter::preprocess(const cv::Mat img) {
+cv::Mat
+LineSegmenter::preprocess(const cv::Mat img)
+{
     // More filters are about to be applied. TheAbzo job.
     cv::Mat preprocessed_img, smoothed_img;
 
@@ -9,11 +11,13 @@ cv::Mat LineSegmenter::preprocess(const cv::Mat img) {
 
     // OTSU thresholding and Binarization.
     cv::threshold(smoothed_img, preprocessed_img, 0.0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-
+    cv::imwrite(string("preprocessed_test") + ".jpg", preprocessed_img); // ToDo @Samir: Remove as it's for debugging.
     return preprocessed_img;
 }
 
-vector<Chunk> LineSegmenter::get_chunks(const cv::Mat img) {
+vector<Chunk>
+LineSegmenter::get_chunks(const cv::Mat img)
+{
 
     int width = img.cols;
     int chunk_width = width / CHUNKS_NUMBER;
@@ -33,3 +37,35 @@ vector<Chunk> LineSegmenter::get_chunks(const cv::Mat img) {
     return chunks;
 }
 
+// ToDo @TheAbzo.
+void
+Chunk::find_contours()
+{
+    waitKey(0);
+}
+
+void
+Chunk::calculate_histogram()
+{
+    freopen("out.txt", "w", stdout);
+    // Assign the size of the hitogram // ToDo @Samir55 later add it to the constructor.
+    this->histogram.resize(this->img.rows);
+
+    int count_black = 0; // ToDo @Samir: Remove as it's for debugging.
+    int count_white = 0;
+    for (int i = 0; i < this->img.rows ; ++i) {
+        for (int j = 0; j < this->img.cols ; ++j) {
+            if (img.at<uchar>(i, j) == 0) {
+                count_black++;
+                this->histogram[i]++;
+            }
+            else count_white++;
+        }
+    }
+
+//    cout << histogram.size() << " " << count_white << endl;
+    for (int i = 0; i < histogram.size(); i++)
+        cout << histogram[i] << ' ';
+    cout << endl;
+
+}
