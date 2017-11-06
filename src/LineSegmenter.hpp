@@ -30,12 +30,15 @@ public:
     int width;
     vector<Contour> contours;
     vector<int> histogram;
+    vector<int> peaks_positions;
+    vector<int> valleys_positions;
 
     // ToDo @TheAbzo.
     ///
     void find_contours();
 
     void calculate_histogram();
+
 };
 
 // WIP Line Segmenter class.

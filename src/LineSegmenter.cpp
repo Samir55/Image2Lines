@@ -18,19 +18,19 @@ LineSegmenter::preprocess (const cv::Mat img)
 vector<Chunk>
 LineSegmenter::get_chunks (const cv::Mat img)
 {
-
+    //
     int width = img.cols;
     int chunk_width = width / CHUNKS_NUMBER;
 
+    //
     vector<Chunk> chunks(CHUNKS_NUMBER);
     for (int i_chunk = 0, start_pixel = 0; i_chunk < CHUNKS_NUMBER; ++i_chunk) {
         chunks[i_chunk].order = i_chunk + 1;
         chunks[i_chunk].start_col = start_pixel;
         chunks[i_chunk].width = chunk_width;
-//        cout << chunk_width <<  " " << start_pixel << " " << img.rows << " " << img.cols << endl; // For debugging.
         chunks[i_chunk].img = cv::Mat(img,
-                                      cv::Range(0, img.rows), // rows
-                                      cv::Range(start_pixel, start_pixel + chunk_width)); // cols
+                                      cv::Range(0, img.rows), // Rows.
+                                      cv::Range(start_pixel, start_pixel + chunk_width)); // Cols.
         start_pixel += chunk_width;
         cv::imwrite(to_string(i_chunk + 1) + ".jpg", chunks[i_chunk].img); // For debugging.
     }
@@ -47,9 +47,7 @@ Chunk::find_contours ()
 void
 Chunk::calculate_histogram ()
 {
-
 //    freopen("out.txt", "w", stdout);
-
     // Get the smoothed profile by applying a meidan filter of size 5.
     cv::Mat img_clone;
     cv::medianBlur(this->img, img_clone, 5);
@@ -68,6 +66,18 @@ Chunk::calculate_histogram ()
             else count_white++;
         }
     }
+
+    // Calculate peaks and valleys positions.
+    for (int i = 1; i < this->histogram.size() - 1; i++) {
+        int left = histogram[i-1], right = histogram[i+1], cent = histogram[i];
+        if (left < cent && right <= cent) { // Peak
+            this->peaks_positions.push_back(i);
+        } else if (left > cent && right >= cent) { // Valley.
+            this->valleys_positions.push_back(i);
+        }
+    }
+
+    // Thresholding the peaks and valleys. // ToDo @Samir55.
 
 //    cout << histogram.size() << " " << count_white << endl;
 //    for (int i = 0; i < histogram.size(); i++)
