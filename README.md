@@ -1,5 +1,10 @@
 # Image 2 Char
+The implementation of this tool is from the following paper.
+"A Statistical approach to line segmentation in handwritten documents" Manivannan Arivazhagan, Harish Srinivasan and Sargur Srihari. and can be found at [this link](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.88.5806&rep=rep1&type=pdf).
 
-This is the **first module** of converting handwritten text image to code.
+This tool converts handwritten text image (including straight and skewed lines) to text. Afterwards, It'll afterwards integrated with a machine learning tool to detect characters.
+The main aim of this project is to compile and execute (try to repair compilation errors too! :) ) code handwritten on paper
 
+## Tools used:
 We'll use C++ and OpenCV.
+
