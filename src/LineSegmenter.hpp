@@ -44,13 +44,17 @@ public:
 // WIP Line Segmenter class.
 class LineSegmenter {
 public:
-///
-/// \param img
-/// \return
-    cv::Mat preprocess(const cv::Mat img);
+    cv::Mat org_img;
+    cv::Mat img;
+    vector<Chunk> chunks;
 
 ///
 /// \param img
 /// \return
-    vector<Chunk> get_chunks(const cv::Mat img);
+    void preprocess();
+
+///
+/// \param img
+/// \return
+    void generate_chunks();
 };
