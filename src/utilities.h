@@ -1,7 +1,7 @@
 #ifndef IMAGE2CHAR_UTILITIES_H_H
 #define IMAGE2CHAR_UTILITIES_H_H
 #include <iostream>
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -9,17 +9,20 @@
 #include <map>
 #include <cstring>
 #include <cmath>
-#include <math.h>
+#include <cmath>
 #include <cv.h>
 #include <highgui.h>
 #include <opencv/cv.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/core/core.hpp"
+
+typedef int valley_id;
+
 using namespace cv;
 using namespace std;
 
-struct Peak{
+struct Peak {
     int position;
     int value;
     int range_start;
@@ -45,7 +48,7 @@ struct Peak{
 
 };
 
-struct Valley{
+struct Valley {
     int position;
     int value;
 
@@ -55,5 +58,7 @@ struct Valley{
     }
 };
 
-
+struct Line {
+    vector<valley_id> valleys;
+};
 #endif //IMAGE2CHAR_UTILITIES_H_H

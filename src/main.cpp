@@ -62,7 +62,7 @@ int main() {
 
     line_segmenter.generate_chunks();
 
-    line_segmenter.chunks[4].calculate_histogram();
+    line_segmenter.find_initial_lines();
 
     return 0;
 

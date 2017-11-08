@@ -24,14 +24,14 @@ public:
 ///
 class Chunk {
 public:
-    cv::Mat img;
-    int order;
-    int start_col;
-    int width;
-    vector<Contour> contours;
-    vector<int> histogram;
-    vector<int> peaks_positions;
-    vector<int> valleys_positions;
+    cv::Mat img; ///<
+    int order; ///<
+    int start_col; ///<
+    int width; ///<
+    vector<Contour> contours; ///<
+    vector<int> histogram; ///<
+    vector<int> peaks_positions; ///<
+    vector<int> valleys_positions; ///<
 
     // ToDo @TheAbzo.
     ///
@@ -44,17 +44,17 @@ public:
 // WIP Line Segmenter class.
 class LineSegmenter {
 public:
-    cv::Mat org_img;
-    cv::Mat img;
-    vector<Chunk> chunks;
+    cv::Mat org_img; ///<
+    cv::Mat img; ///<
+    vector<Chunk> chunks; ///<
+    vector<Line> initial_lines; ///<
 
-///
-/// \param img
-/// \return
+    ///
     void preprocess();
 
-///
-/// \param img
-/// \return
+    ///
     void generate_chunks();
+
+    ///
+    void find_initial_lines();
 };

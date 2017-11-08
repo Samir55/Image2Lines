@@ -37,6 +37,18 @@ LineSegmenter::generate_chunks ()
     this->chunks =  generated_chunks;
 }
 
+void
+LineSegmenter::find_initial_lines()
+{
+    // Get the histogram of the first 5 chunks.
+    for (int i = 0; i < 5; i++) {
+        this->chunks[i].calculate_histogram();
+    }
+
+    // Connect the initial valleys to form lines.
+
+}
+
 // ToDo @TheAbzo.
 void
 Chunk::find_contours ()
