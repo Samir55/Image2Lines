@@ -78,6 +78,7 @@ Chunk::calculate_histogram ()
 
     // Calculate the average height.
     if (lines_count) avg_height /= lines_count;
+    avg_height = avg_height * 5 / 3;
 
     cout << "Lines count " << lines_count << endl;
     cout << "Average height " << avg_height << endl;
@@ -114,14 +115,14 @@ Chunk::calculate_histogram ()
         int min_position = initial_peaks[i-1].position;
         int min_value = initial_peaks[i-1].value;
 
-        for (int j = initial_peaks[i-1].position + 1; j < initial_peaks[i].position - avg_height / 3; j++) {
+        for (int j = (initial_peaks[i-1].position + avg_height/6); j < (initial_peaks[i].position - avg_height / 3); j++) {
             int valley_black_count = 0;
             for (int l = 0; l < img_clone.cols ; ++l) {
                 if (img_clone.at<uchar>(j, l) == 0) {
                     valley_black_count++;
                 }
             }
-            if (valley_black_count <= min_value) {
+            if (valley_black_count < min_value) {
                 min_value = valley_black_count;
                 min_position = j;
             }
