@@ -56,7 +56,7 @@ void testing() {
 
 int main() {
 
-    cv:Mat img = imread("../img/2.png", CV_LOAD_IMAGE_GRAYSCALE);
+    cv:Mat img = imread("../img/3min.png", CV_LOAD_IMAGE_GRAYSCALE);
 
     LineSegmenter line_segmenter;
 
