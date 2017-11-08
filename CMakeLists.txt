@@ -9,5 +9,4 @@ set(SOURCE_FILES
         src/main.cpp)
 
 add_executable(Image2Char ${SOURCE_FILES})
-include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(Image2Char ${OpenCV_LIBS})
