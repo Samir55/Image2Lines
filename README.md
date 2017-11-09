@@ -1,4 +1,7 @@
 # Image 2 Lines
+This is a module of our project for image processing course at Cairo university.
+
+**This is a working in progress project**.
 
 **The implementation of this tool is from the following paper** "A Statistical approach to line segmentation in handwritten documents" Manivannan Arivazhagan, Harish Srinivasan and Sargur Srihari. 
 
@@ -10,12 +13,15 @@ The main aim of this project is to compile and execute (try to repair compilatio
 
 ## Steps
 *  OTSU Threshold and Binarization.
-* Get initial candidate lines.
+* Get initial candidate lines using y-axis histogram projection profile and using adaptive threshold between valleys.
 This is an example of the output produced from the current code.
-![](https://i.imgur.com/tqqIKVw.jpg)
+![](https://i.imgur.com/sRi0Bqj.jpg) 
 * Apply line drawing algorithm and make decissions about regions that hit the lines using Bivariate Gaussian Distribution.
 
 ## Tools used:
 We'll use C++ and OpenCV.
 
-**This is a working in progress project**.
+## Database used
+IAM database.
+
+
