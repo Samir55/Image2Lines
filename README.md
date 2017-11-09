@@ -1,4 +1,4 @@
-# Image 2 Char
+# Image 2 Lines
 
 **The implementation of this tool is from the following paper** "A Statistical approach to line segmentation in handwritten documents" Manivannan Arivazhagan, Harish Srinivasan and Sargur Srihari. 
 
