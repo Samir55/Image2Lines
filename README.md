@@ -18,3 +18,4 @@ This is an example of the output produced from the current code.
 ## Tools used:
 We'll use C++ and OpenCV.
 
+**This is a working in progress project**.
