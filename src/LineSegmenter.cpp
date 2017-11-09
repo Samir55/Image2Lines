@@ -57,7 +57,7 @@ LineSegmenter::connect_line_valleys(int i, Valley *current_valley, Line &line)
         int dist = current_valley->position - valley->position;
         dist = dist < 0 ? -dist : dist;
 
-        if (min_distance > dist && dist <= 25) {
+        if (min_distance > dist && dist <= this->valleys_min_abs_dist) {
             min_distance = dist, connected_to = j;
         }
     }
@@ -77,10 +77,16 @@ LineSegmenter::connect_line_valleys(int i, Valley *current_valley, Line &line)
 void
 LineSegmenter::find_initial_lines()
 {
+    int number_of_heights = 0;
+    this->valleys_min_abs_dist = 0; // ToDo @Samir55 remove after initializations.
     // Get the histogram of the first 5 chunks.
     for (int i = 0; i < 5; i++) {
-        this->chunks[i].calculate_histogram();
+        int avg_height = this->chunks[i].calculate_histogram();
+        if (avg_height)
+            number_of_heights++;
+        this->valleys_min_abs_dist += avg_height;
     }
+    this->valleys_min_abs_dist /= number_of_heights;
 
     // Start form the 5th chunk.
     for (int i = 4; i >= 0; i--) {
@@ -159,7 +165,7 @@ Chunk::find_contours()
     rectangular_contours = merged_rectangles;
 }
 
-void
+int
 Chunk::calculate_histogram()
 {
 //    freopen("out.txt", "w", stdout);
@@ -265,6 +271,7 @@ Chunk::calculate_histogram()
 //    for (auto valley:valleys) {
 //        cout << valley.position << " " << valley.value << endl;
 //    }
+    return int(ceil(avg_height));
 }
 
 void
@@ -273,7 +280,6 @@ LineSegmenter::draw_image_with_lines()
     // Draw the lines (Debugging).
     cv::Mat img_clone = this->color_img;
     int t = 1;
-    cout << this->initial_lines.size() << endl;
     for (auto line : this->initial_lines) {
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
         if (all_valleys_ids.size() == 0) continue;

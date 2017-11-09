@@ -2,8 +2,8 @@
 
 int main() {
     LineSegmenter line_segmenter;
-    line_segmenter.color_img = imread("../img/3min.png", CV_LOAD_IMAGE_COLOR);
-    line_segmenter.org_img = imread("../img/3min.png", CV_LOAD_IMAGE_GRAYSCALE);
+    line_segmenter.color_img = imread("../img/2min.png", CV_LOAD_IMAGE_COLOR);
+    line_segmenter.org_img = imread("../img/2min.png", CV_LOAD_IMAGE_GRAYSCALE);
 
     line_segmenter.preprocess();
 

@@ -40,7 +40,8 @@ public:
     void find_contours();
 
     ///
-    void calculate_histogram();
+    /// \return
+    int calculate_histogram();
 };
 
 // WIP Line Segmenter class.
@@ -52,6 +53,7 @@ public:
     cv::Mat img; ///<
     vector<Chunk> chunks; ///<
     vector<Line> initial_lines; ///<
+    int valleys_min_abs_dist;
 
     ///
     void preprocess();
