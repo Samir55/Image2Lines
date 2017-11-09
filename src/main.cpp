@@ -1,4 +1,3 @@
-#include "utilities.h"
 #include "LineSegmenter.hpp"
 
 int main() {

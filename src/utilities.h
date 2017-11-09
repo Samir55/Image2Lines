@@ -22,6 +22,10 @@ typedef int valley_id;
 using namespace cv;
 using namespace std;
 
+struct Line {
+    vector<valley_id> valleys_ids;
+};
+
 struct Peak {
     int position;
     int value;
@@ -49,16 +53,14 @@ struct Peak {
 };
 
 struct Valley {
+    int valley_id;
     int position;
     int value;
+    bool used;
 
-    Valley () {}
+    Valley (int v_id) : valley_id(v_id), used(false) {}
 
-    Valley (int p, int v) : position(p), value(v){
+    Valley (int v_id, int p, int v) : valley_id(v_id), position(p), value(v), used(false) {
     }
-};
-
-struct Line {
-    vector<valley_id> valleys;
 };
 #endif //IMAGE2CHAR_UTILITIES_H_H

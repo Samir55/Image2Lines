@@ -7,7 +7,8 @@
 // ToDo @TheAbzo Document any function you implement.
 
 /// Contour(Region) class represents a connected region in the image.
-class Contour {
+class Contour
+{
 public:
     int x, y;
     ///< Position of top left pixel of this region.
@@ -16,13 +17,12 @@ public:
 
     ///
     /// \param img
-    void generate_code_chain(cv::Mat &img) {
-        // Border tracing.
-    }
+    void generate_code_chain(cv::Mat &img) {};
 };
 
 ///
-class Chunk {
+class Chunk
+{
 public:
     cv::Mat img; ///< //grey level image
     int order; ///<
@@ -30,19 +30,22 @@ public:
     int width; ///<
     vector<Rect> rectangular_contours; ///<//
     vector<int> histogram; ///<
-    vector<int> peaks_positions; ///<
-    vector<int> valleys_positions; ///<
+    vector<Peak> peaks; ///<
+    vector<Valley> valleys; ///<
 
-    // ToDo @TheAbzo.
+    ///
+    Chunk();
+
     ///
     void find_contours();
 
+    ///
     void calculate_histogram();
-
 };
 
 // WIP Line Segmenter class.
-class LineSegmenter {
+class LineSegmenter
+{
 public:
     cv::Mat org_img; ///<
     cv::Mat img; ///<
@@ -57,4 +60,11 @@ public:
 
     ///
     void find_initial_lines();
+
+private:
+    ///
+    /// \param i
+    /// \param current_valley
+    /// \return
+    Line connect_line_valleys (int i, Valley current_valley, Line line);
 };
