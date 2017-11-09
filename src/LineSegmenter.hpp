@@ -31,10 +31,10 @@ public:
     vector<Rect> rectangular_contours; ///<//
     vector<int> histogram; ///<
     vector<Peak> peaks; ///<
-    vector<Valley> valleys; ///<
+    vector<Valley*> valleys; ///<
 
     ///
-    Chunk();
+    Chunk() {};
 
     ///
     void find_contours();
@@ -47,6 +47,7 @@ public:
 class LineSegmenter
 {
 public:
+    cv::Mat color_img; ///< Used for debugging only.
     cv::Mat org_img; ///<
     cv::Mat img; ///<
     vector<Chunk> chunks; ///<
@@ -61,10 +62,13 @@ public:
     ///
     void find_initial_lines();
 
+    ///
+    void draw_image_with_lines();
+
 private:
     ///
     /// \param i
     /// \param current_valley
     /// \return
-    Line connect_line_valleys (int i, Valley current_valley, Line line);
+    Line connect_line_valleys (int i, Valley* current_valley, Line& line);
 };

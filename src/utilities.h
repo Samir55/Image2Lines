@@ -53,6 +53,7 @@ struct Peak {
 };
 
 struct Valley {
+    int chunk_order;
     int valley_id;
     int position;
     int value;
@@ -60,7 +61,7 @@ struct Valley {
 
     Valley (int v_id) : valley_id(v_id), used(false) {}
 
-    Valley (int v_id, int p, int v) : valley_id(v_id), position(p), value(v), used(false) {
+    Valley (int c_id, int v_id, int p, int v) : chunk_order(c_id), valley_id(v_id), position(p), value(v), used(false) {
     }
 };
 #endif //IMAGE2CHAR_UTILITIES_H_H

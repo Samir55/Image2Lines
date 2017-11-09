@@ -1,10 +1,12 @@
 #include "LineSegmenter.hpp"
 
-map<valley_id, Valley*> all_valleys_ids;
+// ToDo @Samir55 remove chunk width form the line segmenter class.
+map<valley_id, Valley *> all_valleys_ids;
+
 void
 LineSegmenter::preprocess()
 {
-    // More filters are about to be applied. TheAbzo job.
+    // More filters are about to be applied. ToDo @TheAbzo job.
     cv::Mat preprocessed_img, smoothed_img;
 
     // Noise reduction (Currently a basic filter).
@@ -26,20 +28,20 @@ LineSegmenter::generate_chunks()
     //
     vector<Chunk> generated_chunks(CHUNKS_NUMBER);
     for (int i_chunk = 0, start_pixel = 0; i_chunk < CHUNKS_NUMBER; ++i_chunk) {
-        generated_chunks[i_chunk].order = i_chunk + 1;
+        generated_chunks[i_chunk].order = i_chunk;
         generated_chunks[i_chunk].start_col = start_pixel;
         generated_chunks[i_chunk].width = chunk_width;
         generated_chunks[i_chunk].img = cv::Mat(img,
                                                 cv::Range(0, img.rows), // Rows.
                                                 cv::Range(start_pixel, start_pixel + chunk_width)); // Cols.
         start_pixel += chunk_width;
-        cv::imwrite(to_string(i_chunk + 1) + ".jpg", generated_chunks[i_chunk].img); // For debugging.
+//        cv::imwrite(to_string(i_chunk + 1) + ".jpg", generated_chunks[i_chunk].img); // For debugging.
     }
     this->chunks = generated_chunks;
 }
 
 Line
-LineSegmenter::connect_line_valleys(int i, Valley current_valley, Line line)
+LineSegmenter::connect_line_valleys(int i, Valley *current_valley, Line &line)
 {
     if (i <= 0 || chunks[i].valleys.empty()) return line;
 
@@ -48,11 +50,11 @@ LineSegmenter::connect_line_valleys(int i, Valley current_valley, Line line)
     int min_distance = 100000;
 
     for (int j = 0; j < this->chunks[i].valleys.size(); j++) {
-        Valley valley = this->chunks[i].valleys[j];
+        Valley *valley = this->chunks[i].valleys[j];
         // Check if the valley is not connected to any other valley.
-        if (valley.used) continue;
+        if (valley->used) continue;
 
-        int dist = current_valley.position - valley.position;
+        int dist = current_valley->position - valley->position;
         dist = dist < 0 ? -dist : dist;
 
         if (min_distance > dist && dist <= 25) {
@@ -65,11 +67,11 @@ LineSegmenter::connect_line_valleys(int i, Valley current_valley, Line line)
         return line;
     }
 
-    line.valleys_ids.push_back(this->chunks[i].valleys[connected_to].valley_id);
-    current_valley = this->chunks[i].valleys[connected_to];
-    current_valley.used = true;
+    line.valleys_ids.push_back(this->chunks[i].valleys[connected_to]->valley_id);
+    Valley *v = this->chunks[i].valleys[connected_to];
+    v->used = true;
 
-    return connect_line_valleys(i-1, current_valley, line);
+    return connect_line_valleys(i - 1, v, line);
 }
 
 void
@@ -81,24 +83,25 @@ LineSegmenter::find_initial_lines()
     }
 
     // Start form the 5th chunk.
-    for (int i = 4; i > 0; i--) {
+    for (int i = 4; i >= 0; i--) {
         // Check if the chunk is empty.
         if (chunks[i].valleys.empty()) continue;
 
         // Connect each valley with the nearest ones in the left chunks.
-        for (auto valley : chunks[i].valleys) {
+        for (auto &valley : chunks[i].valleys) {
             // Ignore the already connected valleys;
-            if (valley.used) continue;
+            if (valley->used) continue;
 
             // Start a new line having the current valley and connect it with others in the left.
             Line new_line;
-            valley.used = true;
-            new_line.valleys_ids.push_back(valley.valley_id);
+            valley->used = true;
+            new_line.valleys_ids.push_back(valley->valley_id);
+            this->initial_lines.push_back(connect_line_valleys(i - 1, valley, new_line));
 
-            this->initial_lines.push_back(connect_line_valleys(i-1, valley, new_line));
         }
     }
-
+    // For Debugging. ToDo @Samir55 Remove.
+    this->draw_image_with_lines();
 }
 
 void
@@ -156,9 +159,6 @@ Chunk::find_contours()
     rectangular_contours = merged_rectangles;
 }
 
-Chunk::Chunk()
-{} // ToDo @Samir55 move this to header file.
-
 void
 Chunk::calculate_histogram()
 {
@@ -195,8 +195,8 @@ Chunk::calculate_histogram()
     if (lines_count) avg_height /= lines_count;
     avg_height = avg_height * 5 / 3;
 
-    cout << "Lines count " << lines_count << endl;
-    cout << "Average height " << avg_height << endl;
+//    cout << "Lines count " << lines_count << endl;
+//    cout << "Average height " << avg_height << endl;
 
     // Detect Peaks.
     vector<Peak> initial_peaks;
@@ -207,10 +207,12 @@ Chunk::calculate_histogram()
                 centre_val >= initial_peaks.back().value) { // Try to get the largest peak in same region.
                 initial_peaks.back().position = i;
                 initial_peaks.back().value = centre_val;
-            } else if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
-                       centre_val < initial_peaks.back().value) {
+            }
+            else if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
+                centre_val < initial_peaks.back().value) {
 
-            } else {
+            }
+            else {
                 // cout << "LEFT " << left_val << " CENTRE " << centre_val << " RIGHT " << right_val << endl;
                 initial_peaks.push_back(Peak(i, centre_val));
             }
@@ -229,7 +231,7 @@ Chunk::calculate_histogram()
     this->peaks = initial_peaks;
 
     // Search for valleys between 2 peaks.
-    vector<Valley> initial_valleys;
+    vector<Valley *> initial_valleys;
     for (int i = 1; i < initial_peaks.size(); i++) {
         int min_position = initial_peaks[i - 1].position;
         int min_value = initial_peaks[i - 1].value;
@@ -247,18 +249,79 @@ Chunk::calculate_histogram()
                 min_position = j;
             }
         }
-        initial_valleys.push_back(Valley(int(all_valleys_ids.size()), min_position, min_value));
+        Valley *new_valley = new Valley(this->order, int(all_valleys_ids.size()), min_position, min_value);
+
+        initial_valleys.push_back(new_valley);
+        initial_valleys.back()->valley_id = int(all_valleys_ids.size());
+        all_valleys_ids[initial_valleys.back()->valley_id] = new_valley;
     }
 
     this->valleys = initial_valleys;
+//    cout << "Peaks Count " << initial_peaks.size() << endl;
+//    for (auto peak:peaks) {
+//        cout << peak.position << " " << peak.value << endl;
+//    }
+//    cout << "Valleys Count " << initial_valleys.size() << endl;
+//    for (auto valley:valleys) {
+//        cout << valley.position << " " << valley.value << endl;
+//    }
+}
 
-    cout << "Peaks Count " << initial_peaks.size() << endl;
-    for (auto peak:peaks) {
-        cout << peak.position << " " << peak.value << endl;
-    }
-    cout << "Valleys Count " << initial_valleys.size() << endl;
-    for (auto valley:valleys) {
-        cout << valley.position << " " << valley.value << endl;
-    }
+void
+LineSegmenter::draw_image_with_lines()
+{
+    // Draw the lines (Debugging).
+    cv::Mat img_clone = this->color_img;
+    int t = 1;
+    cout << this->initial_lines.size() << endl;
+    for (auto line : this->initial_lines) {
+//        int idx = 0;
+//        int row = all_valleys_ids[line.valleys_ids[idx]]->position;
+//        for (int i = 0; i < img_clone.cols; i++) {
+//            if (idx+1 < line.valleys_ids.size() && i == chunks[all_valleys_ids[line.valleys_ids[idx]]->chunk_order].start_col) {
+//                idx++;
+//                cout << row <<" " << i << endl;
+//                row = all_valleys_ids[line.valleys_ids[idx]]->position;
+//            }
+//            img_clone.at<Vec3b>(row, i) = cv::Vec3b(255,0,255);
+//        }
+//    }
+//        reverse(line.valleys_ids.begin(), line.valleys_ids.end());
+//        int i_valley = 1;
+//        int valley_id = line.valleys_ids[0];
+//        int r = all_valleys_ids[valley_id]->position;
+//        int start_col = this->chunks[all_valleys_ids[valley_id]->chunk_order].start_col;
+//        for (int i = 0; i < img_clone.cols; i++) {
+//            if (i_valley < line.valleys_ids.size()-1 && i == start_col) {
+//                i_valley++;
+//                valley_id = line.valleys_ids[i_valley];
+//                r = all_valleys_ids[valley_id]->position;
+//            }
+//            img_clone.at<Vec3b>(r, i) = cv::Vec3b(255, 0, 255);
+//        }
+        sort(line.valleys_ids.begin(), line.valleys_ids.end());
+        if (all_valleys_ids.size() == 0) continue;
+        if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
+            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col; j++) {
+                img_clone.at<Vec3b>(all_valleys_ids[line.valleys_ids.front()]->position, j) = cv::Vec3b(255, 0, 255);
+            }
+        }
+        for (auto id : line.valleys_ids) {
+            int chunk_order = all_valleys_ids[id]->chunk_order;
+            int chunk_row = all_valleys_ids[id]->position;
+            int chunk_width = chunks[all_valleys_ids[id]->chunk_order].width;
 
+            for (int j = this->chunks[chunk_order].start_col;
+                 j < this->chunks[chunk_order].start_col + chunk_width; j++) {
+                img_clone.at<Vec3b>(chunk_row, j) = cv::Vec3b(255, 0, 255);
+            }
+            if (chunk_order == all_valleys_ids[line.valleys_ids.back()]->chunk_order) {
+                for (int j = this->chunks[4].start_col; j < color_img.cols; j++) {
+                    img_clone.at<Vec3b>(chunk_row, j) = cv::Vec3b(255, 0, 255);
+                }
+            }
+        }
+    }
+    // Write the image to see it.
+    cv::imwrite("Initial_Lines.jpg", img_clone); // For debugging.
 }
