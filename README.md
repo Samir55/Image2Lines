@@ -1,16 +1,13 @@
 # Image 2 Char
 
-This is the **first module** of converting handwritten text image to code.
+**The implementation of this tool is from the following paper** "A Statistical approach to line segmentation in handwritten documents" Manivannan Arivazhagan, Harish Srinivasan and Sargur Srihari. 
 
-We'll use Histogram approach for line segmentation, proposed in [this paper](http://www.cvc.uab.es/icdar2009/papers/3725a651.pdf) by Rodolfo P. dos Santos, Gabriela S. Clemente, Tsang Ing Ren and George D.C.
+  It can be found at [this link](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.88.5806&rep=rep1&type=pdf).
 
-## Steps
-### I. Line Segmentation
-* Preprocessing: Noise reduction and binarization.
-* Y Histogram projection for line detection.
-* False line exclusion.
-* Repair the lines.
-### II. Word Segmentation
-### III. Char Segmentation
+This tool converts handwritten text image (including straight and skewed lines) to text. Afterwards, It'll afterwards integrated with a machine learning tool to detect characters.
 
-We'll use GNU Octave at the beginning then we'll migrate to C++ and OpenCV.
+The main aim of this project is to compile and execute (try to repair compilation errors too! :) ) code handwritten on paper
+
+## Tools used:
+We'll use C++ and OpenCV.
+
