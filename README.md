@@ -1,4 +1,5 @@
 # Image 2 Lines
+This is a module of our image processing course at Cairo university.
 
 **The implementation of this tool is from the following paper** "A Statistical approach to line segmentation in handwritten documents" Manivannan Arivazhagan, Harish Srinivasan and Sargur Srihari. 
 
@@ -17,5 +18,8 @@ This is an example of the output produced from the current code.
 
 ## Tools used:
 We'll use C++ and OpenCV.
+
+## Database used
+IAM database.
 
 **This is a working in progress project**.
