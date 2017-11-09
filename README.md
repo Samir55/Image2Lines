@@ -1,5 +1,7 @@
 # Image 2 Lines
-This is a module of our image processing course at Cairo university.
+This is a module of our project for image processing course at Cairo university.
+
+**This is a working in progress project**.
 
 **The implementation of this tool is from the following paper** "A Statistical approach to line segmentation in handwritten documents" Manivannan Arivazhagan, Harish Srinivasan and Sargur Srihari. 
 
@@ -22,4 +24,4 @@ We'll use C++ and OpenCV.
 ## Database used
 IAM database.
 
-**This is a working in progress project**.
+
