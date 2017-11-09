@@ -35,7 +35,7 @@ LineSegmenter::generate_chunks()
                                                 cv::Range(0, img.rows), // Rows.
                                                 cv::Range(start_pixel, start_pixel + chunk_width)); // Cols.
         start_pixel += chunk_width;
-//        cv::imwrite(to_string(i_chunk + 1) + ".jpg", generated_chunks[i_chunk].img); // For debugging.
+        cv::imwrite(to_string(i_chunk + 1) + ".jpg", generated_chunks[i_chunk].img); // For debugging.
     }
     this->chunks = generated_chunks;
 }
@@ -97,6 +97,8 @@ LineSegmenter::find_initial_lines()
         for (auto &valley : chunks[i].valleys) {
             // Ignore the already connected valleys;
             if (valley->used) continue;
+
+            // ToDo @Samir55 ignore if there one used before having a close level value to it.
 
             // Start a new line having the current valley and connect it with others in the left.
             Line new_line;
@@ -269,7 +271,7 @@ Chunk::calculate_histogram()
 //    }
 //    cout << "Valleys Count " << initial_valleys.size() << endl;
 //    for (auto valley:valleys) {
-//        cout << valley.position << " " << valley.value << endl;
+//        cout << valley->position << " " << valley->value << endl;
 //    }
     return int(ceil(avg_height));
 }
