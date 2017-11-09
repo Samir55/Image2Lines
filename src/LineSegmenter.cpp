@@ -275,30 +275,6 @@ LineSegmenter::draw_image_with_lines()
     int t = 1;
     cout << this->initial_lines.size() << endl;
     for (auto line : this->initial_lines) {
-//        int idx = 0;
-//        int row = all_valleys_ids[line.valleys_ids[idx]]->position;
-//        for (int i = 0; i < img_clone.cols; i++) {
-//            if (idx+1 < line.valleys_ids.size() && i == chunks[all_valleys_ids[line.valleys_ids[idx]]->chunk_order].start_col) {
-//                idx++;
-//                cout << row <<" " << i << endl;
-//                row = all_valleys_ids[line.valleys_ids[idx]]->position;
-//            }
-//            img_clone.at<Vec3b>(row, i) = cv::Vec3b(255,0,255);
-//        }
-//    }
-//        reverse(line.valleys_ids.begin(), line.valleys_ids.end());
-//        int i_valley = 1;
-//        int valley_id = line.valleys_ids[0];
-//        int r = all_valleys_ids[valley_id]->position;
-//        int start_col = this->chunks[all_valleys_ids[valley_id]->chunk_order].start_col;
-//        for (int i = 0; i < img_clone.cols; i++) {
-//            if (i_valley < line.valleys_ids.size()-1 && i == start_col) {
-//                i_valley++;
-//                valley_id = line.valleys_ids[i_valley];
-//                r = all_valleys_ids[valley_id]->position;
-//            }
-//            img_clone.at<Vec3b>(r, i) = cv::Vec3b(255, 0, 255);
-//        }
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
         if (all_valleys_ids.size() == 0) continue;
         if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
