@@ -1,8 +1,7 @@
 #include "LineSegmenter.hpp"
 
 void
-LineSegmenter::preprocess ()
-{
+LineSegmenter::preprocess() {
     // More filters are about to be applied. TheAbzo job.
     cv::Mat preprocessed_img, smoothed_img;
 
@@ -16,8 +15,7 @@ LineSegmenter::preprocess ()
 }
 
 void
-LineSegmenter::generate_chunks ()
-{
+LineSegmenter::generate_chunks() {
     //
     int width = img.cols;
     int chunk_width = width / CHUNKS_NUMBER;
@@ -29,17 +27,16 @@ LineSegmenter::generate_chunks ()
         generated_chunks[i_chunk].start_col = start_pixel;
         generated_chunks[i_chunk].width = chunk_width;
         generated_chunks[i_chunk].img = cv::Mat(img,
-                                      cv::Range(0, img.rows), // Rows.
-                                      cv::Range(start_pixel, start_pixel + chunk_width)); // Cols.
+                                                cv::Range(0, img.rows), // Rows.
+                                                cv::Range(start_pixel, start_pixel + chunk_width)); // Cols.
         start_pixel += chunk_width;
         cv::imwrite(to_string(i_chunk + 1) + ".jpg", generated_chunks[i_chunk].img); // For debugging.
     }
-    this->chunks =  generated_chunks;
+    this->chunks = generated_chunks;
 }
 
 void
-LineSegmenter::find_initial_lines()
-{
+LineSegmenter::find_initial_lines() {
     // Get the histogram of the first 5 chunks.
     for (int i = 0; i < 5; i++) {
         this->chunks[i].calculate_histogram();
@@ -50,70 +47,64 @@ LineSegmenter::find_initial_lines()
 }
 
 void
-Chunk::find_contours ()
-{
-    cv::Mat filtered;
-    // Apply filters
+Chunk::find_contours() {
+    cv::Mat img_clone = this->img;
     // ToDO @TheAbzo add more filters
-    blur( img, filtered, Size(3, 3 ), Point(-1,-1) );
-    cv::threshold(filtered, img_bw, 0.0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
 
-    //contours detection
+    // Contours detection.
     vector<vector<Point>> contours;
     vector<Vec4i> hierarchy;
-    findContours( img_bw, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE,Point(0,0) );
+    findContours(img_clone, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE, Point(0, 0));
 
-    //initializing rectangular and poly vectors
-    vector<vector<Point> > contours_poly( contours.size() );
-    vector<Rect> boundRect( contours.size() -1);
+    // Initializing rectangular and poly vectors.
+    vector<vector<Point> > contours_poly(contours.size());
+    vector<Rect> boundRect(contours.size() - 1);
 
-    //getting rectangular boundries from contours
-    for( size_t i = 0; i < contours.size()-1; i++ )
-    {
-        approxPolyDP( Mat(contours[i]), contours_poly[i], 1, true );//apply approximation to polygons with accuracy +-3
-        boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+    // Getting rectangular boundries from contours.
+    for (size_t i = 0; i < contours.size() - 1; i++) {
+        approxPolyDP(Mat(contours[i]), contours_poly[i], 1, true);//apply approximation to polygons with accuracy +-3
+        boundRect[i] = boundingRect(Mat(contours_poly[i]));
     }
 
-    //merging the rectangular boundries
-    Rect2d rectangle3 ;
+    // Merging the rectangular boundaries.
+    Rect2d rectangle3;
     vector<Rect> merged_rectangles;
-    bool is_repeated=false;
-    Mat drawing = Mat::zeros( img_bw.size(), CV_8UC3 );
+    bool is_repeated = false;
+    Mat drawing = Mat::zeros(img_clone.size(), CV_8UC3);
 
-    //checking for intersecting rectangles
-    for(int i=0; i<boundRect.size(); i++) {
-        is_repeated=false;
+    // Checking for intersecting rectangles.
+    for (int i = 0; i < boundRect.size(); i++) {
+        is_repeated = false;
 
-        for(int j=i+1; j<boundRect.size(); j++) {
+        for (int j = i + 1; j < boundRect.size(); j++) {
             rectangle3 = boundRect[i] & boundRect[j];
 
-            //check for intersection/union
+            // Check for intersection/union.
             if (rectangle3.area() > 0) {
-                is_repeated=true;
-                rectangle3=boundRect[i] | boundRect[j]; //merging
+                is_repeated = true;
+                rectangle3 = boundRect[i] | boundRect[j]; //merging
                 Rect2d merged_rectangle(rectangle3.tl().x, rectangle3.tl().y, rectangle3.width, rectangle3.height);
 
-                //push in merged rectangle after checking all the inner loop
-                if(j==boundRect.size()-2)
+                // Push in merged rectangle after checking all the inner loop.
+                if (j == boundRect.size() - 2)
                     merged_rectangles.push_back(merged_rectangle);
 
-                //update the current vector
+                // Update the current vector.
                 boundRect[j] = merged_rectangle;
             }
         }
-        //adding the non repeated (not intersected) rectangles
-        if(!is_repeated)
+        // Adding the non repeated (not intersected) rectangles.
+        if (!is_repeated)
             merged_rectangles.push_back(boundRect[i]);
     }
     rectangular_contours = merged_rectangles;
 }
 
 void
-Chunk::calculate_histogram ()
-{
+Chunk::calculate_histogram() {
 //    freopen("out.txt", "w", stdout);
 
-    // Get the smoothed profile by applying a meidan filter of size 5.
+    // Get the smoothed profile by applying a median filter of size 5.
     cv::Mat img_clone;
     cv::medianBlur(this->img, img_clone, 5);
 
@@ -121,9 +112,9 @@ Chunk::calculate_histogram ()
     this->histogram.resize(img_clone.rows);
 
     int black_count = 0, avg_height = 0, lines_count = 0, current_height = 0;
-    for (int i = 0; i < img_clone.rows ; ++i) {
+    for (int i = 0; i < img_clone.rows; ++i) {
         black_count = 0;
-        for (int j = 0; j < img_clone.cols ; ++j) {
+        for (int j = 0; j < img_clone.cols; ++j) {
             if (img_clone.at<uchar>(i, j) == 0) {
                 black_count++;
                 this->histogram[i]++;
@@ -150,12 +141,14 @@ Chunk::calculate_histogram ()
     // Detect Peaks.
     vector<Peak> initial_peaks;
     for (int i = 1; i < this->histogram.size() - 1; i++) {
-        int left_val = this->histogram[i-1], right_val = this->histogram[i], centre_val = this->histogram[i+1];
+        int left_val = this->histogram[i - 1], right_val = this->histogram[i], centre_val = this->histogram[i + 1];
         if (centre_val > left_val && centre_val > right_val) { // Peak detected.
-            if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height/2 && centre_val >= initial_peaks.back().value) { // Try to get the largest peak in same region.
+            if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
+                centre_val >= initial_peaks.back().value) { // Try to get the largest peak in same region.
                 initial_peaks.back().position = i;
                 initial_peaks.back().value = centre_val;
-            } else if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height/2 && centre_val < initial_peaks.back().value) {
+            } else if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
+                       centre_val < initial_peaks.back().value) {
 
             } else {
                 // cout << "LEFT " << left_val << " CENTRE " << centre_val << " RIGHT " << right_val << endl;
@@ -168,7 +161,7 @@ Chunk::calculate_histogram ()
     sort(initial_peaks.begin(), initial_peaks.end());
 
     // Resize
-    initial_peaks.resize(lines_count + 1 <= initial_peaks.size() ? lines_count + 1: initial_peaks.size());
+    initial_peaks.resize(lines_count + 1 <= initial_peaks.size() ? lines_count + 1 : initial_peaks.size());
 
     // Sort peaks by least position.
     sort(initial_peaks.begin(), initial_peaks.end(), Peak::comp);
@@ -176,12 +169,13 @@ Chunk::calculate_histogram ()
     // Search for valleys between 2 peaks.
     vector<Valley> initial_valleys;
     for (int i = 1; i < initial_peaks.size(); i++) {
-        int min_position = initial_peaks[i-1].position;
-        int min_value = initial_peaks[i-1].value;
+        int min_position = initial_peaks[i - 1].position;
+        int min_value = initial_peaks[i - 1].value;
 
-        for (int j = (initial_peaks[i-1].position + avg_height/6); j < (initial_peaks[i].position - avg_height / 3); j++) {
+        for (int j = (initial_peaks[i - 1].position + avg_height / 6);
+             j < (initial_peaks[i].position - avg_height / 3); j++) {
             int valley_black_count = 0;
-            for (int l = 0; l < img_clone.cols ; ++l) {
+            for (int l = 0; l < img_clone.cols; ++l) {
                 if (img_clone.at<uchar>(j, l) == 0) {
                     valley_black_count++;
                 }
@@ -196,11 +190,11 @@ Chunk::calculate_histogram ()
 
     cout << "Peaks Count " << initial_peaks.size() << endl;
     for (auto peak:initial_peaks) {
-        cout << peak.position <<  " " << peak.value << endl;
+        cout << peak.position << " " << peak.value << endl;
     }
     cout << "Valleys Count " << initial_valleys.size() << endl;
     for (auto valley:initial_valleys) {
-        cout << valley.position <<  " " << valley.value << endl;
+        cout << valley.position << " " << valley.value << endl;
     }
 
 }

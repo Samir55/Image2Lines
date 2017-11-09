@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 
-project(Image2Char)
+project(Image2Lines)
 find_package(OpenCV REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
