@@ -281,11 +281,15 @@ LineSegmenter::draw_image_with_lines()
     cv::Mat img_clone = this->color_img;
     int t = 1;
     for (auto line : this->initial_lines) {
+        // Sort the valleys according to their chunk number.
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
+        int previous_row = 0;
         if (all_valleys_ids.size() == 0) continue;
+
         if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
+            previous_row = all_valleys_ids[line.valleys_ids.front()]->position;
             for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col; j++) {
-                img_clone.at<Vec3b>(all_valleys_ids[line.valleys_ids.front()]->position, j) = cv::Vec3b(255, 0, 255);
+                img_clone.at<Vec3b>(previous_row, j) = cv::Vec3b(255, 0, 255);
             }
         }
         for (auto id : line.valleys_ids) {
@@ -293,12 +297,19 @@ LineSegmenter::draw_image_with_lines()
             int chunk_row = all_valleys_ids[id]->position;
             int chunk_width = chunks[all_valleys_ids[id]->chunk_order].width;
 
+            if (previous_row != chunk_row) {
+                for (auto i = int(min(previous_row, chunk_row)); i < int(max(previous_row,chunk_row)); i++) {
+                    img_clone.at<Vec3b>(i, this->chunks[chunk_order].start_col-1) = cv::Vec3b(255, 0, 255);
+                }
+                previous_row = chunk_row;
+            }
+
             for (int j = this->chunks[chunk_order].start_col;
                  j < this->chunks[chunk_order].start_col + chunk_width; j++) {
                 img_clone.at<Vec3b>(chunk_row, j) = cv::Vec3b(255, 0, 255);
             }
             if (chunk_order == all_valleys_ids[line.valleys_ids.back()]->chunk_order) {
-                for (int j = this->chunks[4].start_col; j < color_img.cols; j++) {
+                for (int j = this->chunks[chunk_order].start_col; j < color_img.cols; j++) {
                     img_clone.at<Vec3b>(chunk_row, j) = cv::Vec3b(255, 0, 255);
                 }
             }
