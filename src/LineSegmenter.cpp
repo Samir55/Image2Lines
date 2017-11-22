@@ -251,7 +251,7 @@ Chunk::calculate_histogram()
         int min_position = initial_peaks[i - 1].position;
         int min_value = initial_peaks[i - 1].value;
 
-        for (int j = (initial_peaks[i - 1].position + avg_height / 6);
+        for (int j = (initial_peaks[i - 1].position + avg_height / 3);
              j < (initial_peaks[i].position - avg_height / 3); j++) {
             int valley_black_count = 0;
             for (int l = 0; l < img_clone.cols; ++l) {
