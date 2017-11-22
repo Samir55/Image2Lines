@@ -63,5 +63,9 @@ struct Valley {
 
     Valley (int c_id, int v_id, int p, int v) : chunk_order(c_id), valley_id(v_id), position(p), value(v), used(false) {
     }
+
+    static bool comp (const Valley *a, const Valley *b)  {
+        return a->position < b->position; // Write here the condition that must hold for all valleys.
+    }
 };
 #endif //IMAGE2CHAR_UTILITIES_H_H

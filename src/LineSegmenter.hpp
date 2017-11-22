@@ -1,5 +1,6 @@
 #include "utilities.h"
 #define CHUNKS_NUMBER 20
+#define TEST_LINE_COLOR cv::Vec3b(255, 0, 255)
 
 // Note you can use C++11 new syntax for loops/etc.
 // ToDo @Samir55 add initializations.
@@ -34,12 +35,14 @@ public:
     vector<Valley*> valleys; ///<
 
     ///
-    Chunk() {};
+    Chunk() {
+        valleys = vector<Valley*>();
+    };
 
     ///
     void find_contours();
 
-    ///
+    /// Contours detection in this image chunk.
     /// \return
     int calculate_histogram();
 };

@@ -43,6 +43,8 @@ LineSegmenter::generate_chunks()
 Line
 LineSegmenter::connect_line_valleys(int i, Valley *current_valley, Line &line)
 {
+//    if (chunks[i].valleys.empty()) i--;
+//    if (i < 0) return line;
     if (i <= 0 || chunks[i].valleys.empty()) return line;
 
     // Choose the closest valley in right chunk to the start valley.
@@ -105,7 +107,13 @@ LineSegmenter::find_initial_lines()
             valley->used = true;
             new_line.valleys_ids.push_back(valley->valley_id);
             this->initial_lines.push_back(connect_line_valleys(i - 1, valley, new_line));
-
+//            vector<valley_id> new_valleys_ids;
+//            new_valleys_ids.push_back((this->initial_lines.back().valleys_ids.front()));
+//            cout << "New Line: ";
+//            for (int i = 0; i < this->initial_lines.back().valleys_ids.size(); i++) {
+//                cout << all_valleys_ids[this->initial_lines.back().valleys_ids[i]]->position << " ";
+//            }
+//            cout << endl;
         }
     }
     // For Debugging. ToDo @Samir55 Remove.
@@ -118,16 +126,15 @@ Chunk::find_contours()
     cv::Mat img_clone = this->img;
     // ToDO @TheAbzo add more filters
 
-    // Contours detection.
     vector<vector<Point>> contours;
-    vector<Vec4i> hierarchy;
+    vector<Vec4i> hierarchy; // It's not used yet, but it's there if we want to.
     findContours(img_clone, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE, Point(0, 0));
 
     // Initializing rectangular and poly vectors.
     vector<vector<Point> > contours_poly(contours.size());
     vector<Rect> bound_rect(contours.size() - 1);
 
-    // Getting rectangular boundries from contours.
+    // Getting rectangular boundaries from contours.
     for (size_t i = 0; i < contours.size() - 1; i++) {
         approxPolyDP(Mat(contours[i]), contours_poly[i], 1, true);//apply approximation to polygons with accuracy +-3
         bound_rect[i] = boundingRect(Mat(contours_poly[i]));
@@ -286,7 +293,7 @@ LineSegmenter::draw_image_with_lines()
         // Sort the valleys according to their chunk number.
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
         int previous_row = 0;
-        if (all_valleys_ids.size() == 0) continue;
+        if (line.valleys_ids.size() <= 1) continue;
 
         if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
             previous_row = all_valleys_ids[line.valleys_ids.front()]->position;
@@ -301,22 +308,21 @@ LineSegmenter::draw_image_with_lines()
 
             if (previous_row != chunk_row) {
                 for (auto i = int(min(previous_row, chunk_row)); i < int(max(previous_row,chunk_row)); i++) {
-                    img_clone.at<Vec3b>(i, this->chunks[chunk_order].start_col-1) = cv::Vec3b(255, 0, 255);
+                    img_clone.at<Vec3b>(i, this->chunks[chunk_order].start_col-1) = TEST_LINE_COLOR;
                 }
                 previous_row = chunk_row;
             }
 
             for (int j = this->chunks[chunk_order].start_col;
                  j < this->chunks[chunk_order].start_col + chunk_width; j++) {
-                img_clone.at<Vec3b>(chunk_row, j) = cv::Vec3b(255, 0, 255);
+                img_clone.at<Vec3b>(chunk_row, j) = TEST_LINE_COLOR;
             }
             if (chunk_order == all_valleys_ids[line.valleys_ids.back()]->chunk_order) {
                 for (int j = this->chunks[chunk_order].start_col; j < color_img.cols; j++) {
-                    img_clone.at<Vec3b>(chunk_row, j) = cv::Vec3b(255, 0, 255);
+                    img_clone.at<Vec3b>(chunk_row, j) = TEST_LINE_COLOR;
                 }
             }
         }
     }
-    // Write the image to see it.
     cv::imwrite("Initial_Lines.jpg", img_clone); // For debugging.
 }
