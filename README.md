@@ -14,8 +14,9 @@ The main aim of this project is to compile and execute (try to repair compilatio
 ## Steps
 *  OTSU Threshold and Binarization.
 * Get initial candidate lines using y-axis histogram projection profile and using adaptive threshold between valleys.
-This is an example of the output produced from the current code.
-![](https://i.imgur.com/sRi0Bqj.jpg) 
+These are examples of the output produced from the current code.
+![](https://i.imgur.com/BcyCHAl.jpg) 
+![](https://i.imgur.com/B7Zld79.jpg)
 * Apply line drawing algorithm and make decissions about regions that hit the lines using Bivariate Gaussian Distribution.
 
 ## Tools used:
