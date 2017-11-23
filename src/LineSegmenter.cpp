@@ -375,3 +375,11 @@ LineSegmenter::get_lines_mats()
 //            }
 //        }
 }
+
+void
+lines_drawing() {
+    // Loop over the lines.
+        // When hit get the hit component and get the above and the below line regions.
+        // Apply to each pixel in each line region P(p |μ,Σ) = |2πΣ|1 (p − μ)Σ−1(p − μ)T to get 2 probabilities.
+        // Assign the region to the correct line region and update the points of the separator line.
+}

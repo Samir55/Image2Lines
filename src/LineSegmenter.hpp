@@ -75,6 +75,9 @@ public:
     ///
     void draw_image_with_lines(bool save_img = true);
 
+    ///
+    void lines_drawing();
+
 private:
     ///
     /// \param i
