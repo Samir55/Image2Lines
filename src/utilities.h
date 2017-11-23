@@ -22,10 +22,14 @@ typedef int valley_id;
 using namespace cv;
 using namespace std;
 
+/// A class representing the separator between line regions.
 struct Line {
-    vector<valley_id> valleys_ids;
+    vector<valley_id> valleys_ids; ///<
+    vector<Point> points; ///< The points representing the line.
+    int height; ///< The height of the line region above this line separator.
 };
 
+///
 struct Peak {
     int position;
     int value;
@@ -66,6 +70,14 @@ struct Valley {
 
     static bool comp (const Valley *a, const Valley *b)  {
         return a->position < b->position; // Write here the condition that must hold for all valleys.
+    }
+};
+
+struct Region {
+    cv::Mat region;
+    cv::Mat covar;
+    cv::Mat mean;
+    Region(cv::Mat a, cv::Mat b, cv::Mat c) : region(a), covar(b), mean(c) {
     }
 };
 #endif //IMAGE2CHAR_UTILITIES_H_H

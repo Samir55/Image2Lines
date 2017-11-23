@@ -12,6 +12,7 @@ int main() {
     line_segmenter.generate_chunks();
 
     line_segmenter.find_initial_lines();
+    line_segmenter.get_lines_mats();
 
     return 0;
 

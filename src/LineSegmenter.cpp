@@ -174,6 +174,7 @@ Chunk::find_contours()
     rectangular_contours = merged_rectangles;
 }
 
+// ToDo @Samir55 REFACTOR
 int
 Chunk::calculate_histogram()
 {
@@ -208,7 +209,7 @@ Chunk::calculate_histogram()
 
     // Calculate the average height.
     if (lines_count) avg_height /= lines_count;
-    avg_height = avg_height * 5 / 3;
+    avg_height = avg_height + (avg_height/2.0);
 
 //    cout << "Lines count " << lines_count << endl;
 //    cout << "Average height " << avg_height << endl;
@@ -283,13 +284,16 @@ Chunk::calculate_histogram()
     return int(ceil(avg_height));
 }
 
+// ToDo @Samir55 REFACTOR
 void
-LineSegmenter::draw_image_with_lines()
+LineSegmenter::draw_image_with_lines(bool save_img)
 {
     // Draw the lines (Debugging).
     cv::Mat img_clone = this->color_img;
-    int t = 1;
-    for (auto line : this->initial_lines) {
+
+    int last_height = 0;
+    for (auto &line : this->initial_lines) {
+        int line_height = 0;
         // Sort the valleys according to their chunk number.
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
         int previous_row = 0;
@@ -297,32 +301,77 @@ LineSegmenter::draw_image_with_lines()
 
         if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
             previous_row = all_valleys_ids[line.valleys_ids.front()]->position;
-            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col; j++) {
-                img_clone.at<Vec3b>(previous_row, j) = cv::Vec3b(255, 0, 255);
+            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col -1 ; j++) {
+                if ( img_clone.at<Vec3b>(previous_row, j) != TEST_LINE_COLOR)
+                    line.points.push_back(Point(previous_row, j));
+                if (save_img) img_clone.at<Vec3b>(previous_row, j) = TEST_LINE_COLOR;
+                line_height = max(line_height, previous_row);
             }
         }
+
         for (auto id : line.valleys_ids) {
             int chunk_order = all_valleys_ids[id]->chunk_order;
             int chunk_row = all_valleys_ids[id]->position;
             int chunk_width = chunks[all_valleys_ids[id]->chunk_order].width;
 
             if (previous_row != chunk_row) {
+                if ( img_clone.at<Vec3b>(min(previous_row, chunk_row), this->chunks[chunk_order].start_col-1) != TEST_LINE_COLOR)
+                    line.points.push_back(Point(min(previous_row, chunk_row), this->chunks[chunk_order].start_col-1));
                 for (auto i = int(min(previous_row, chunk_row)); i < int(max(previous_row,chunk_row)); i++) {
-                    img_clone.at<Vec3b>(i, this->chunks[chunk_order].start_col-1) = TEST_LINE_COLOR;
+                    if (save_img) img_clone.at<Vec3b>(i, this->chunks[chunk_order].start_col-1) = TEST_LINE_COLOR;
+                    line_height = max(line_height, i);
                 }
                 previous_row = chunk_row;
             }
 
             for (int j = this->chunks[chunk_order].start_col;
                  j < this->chunks[chunk_order].start_col + chunk_width; j++) {
-                img_clone.at<Vec3b>(chunk_row, j) = TEST_LINE_COLOR;
+                if ( img_clone.at<Vec3b>(previous_row, j) != TEST_LINE_COLOR)
+                    line.points.push_back(Point(chunk_row, j));
+                if (save_img) img_clone.at<Vec3b>(chunk_row, j) = TEST_LINE_COLOR;
+                line_height = max(line_height, chunk_row);
             }
             if (chunk_order == all_valleys_ids[line.valleys_ids.back()]->chunk_order) {
                 for (int j = this->chunks[chunk_order].start_col; j < color_img.cols; j++) {
-                    img_clone.at<Vec3b>(chunk_row, j) = TEST_LINE_COLOR;
+                    if ( img_clone.at<Vec3b>(previous_row, j) != TEST_LINE_COLOR)
+                        line.points.push_back(Point(chunk_row, j));
+                    if (save_img) img_clone.at<Vec3b>(chunk_row, j) = TEST_LINE_COLOR;
+                    line_height = max(line_height, chunk_row);
                 }
             }
         }
+        line.height = line_height - last_height;
+        last_height = line_height;
     }
     cv::imwrite("Initial_Lines.jpg", img_clone); // For debugging.
+}
+
+void
+LineSegmenter::get_lines_mats()
+{
+    int idx = 0;
+    int row_start = 0;
+
+    Line &line = this->initial_lines.front();
+    for (auto &line : this->initial_lines) {
+        if (line.valleys_ids.size() <= 1) continue;
+//        cout << row_start << " " << row_start + line.height << endl;
+        cv::Mat new_region = cv::Mat(img,
+                                            cv::Range(row_start, row_start + line.height), // Rows.
+                                            cv::Range(0, this->img.cols)); // Cols.
+        cv::Mat covar, mean;
+        // Calculate covariance and the mean of the region.
+        cv::calcCovarMatrix(new_region, covar, mean, COVAR_NORMAL | COVAR_ROWS);
+        cv::imwrite(string("test") + to_string(idx++) + ".jpg", new_region); // ToDo @Samir: Remove as it's for debugging.
+        this->line_regions.push_back(Region(new_region, covar, mean));
+        row_start += line.height;
+    }
+
+    //        cv::Mat new_region = cv::Mat((line.height) ,this->img.cols, CV_8UC3);
+//        for (int i_col = 0; i_col < this->img.cols; i_col++) {
+//            for (int i_row = 0; i_row < new_region.rows; i_row++) {
+//                if (i_row + row_start > line.points[i_col].x) {}
+//                else {new_region.at<int>(i_row, i_col) = 1;}
+//            }
+//        }
 }

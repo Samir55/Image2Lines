@@ -56,7 +56,9 @@ public:
     cv::Mat img; ///<
     vector<Chunk> chunks; ///<
     vector<Line> initial_lines; ///<
+    vector<Line> final_lines; ///<
     int valleys_min_abs_dist;
+    vector<Region> line_regions;
 
     ///
     void preprocess();
@@ -68,7 +70,10 @@ public:
     void find_initial_lines();
 
     ///
-    void draw_image_with_lines();
+    void get_lines_mats();
+
+    ///
+    void draw_image_with_lines(bool save_img = true);
 
 private:
     ///
