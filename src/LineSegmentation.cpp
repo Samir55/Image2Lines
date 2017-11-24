@@ -169,7 +169,6 @@ LineSegmentation::get_initial_lines()
 void
 LineSegmentation::draw_image_with_lines(bool save_img)
 {
-    // Draw the lines (Debugging).
     cv::Mat img_clone = this->color_img;
 
     int last_height = 0;
@@ -180,10 +179,10 @@ LineSegmentation::draw_image_with_lines(bool save_img)
         int previous_row = 0;
         if (line.valleys_ids.size() <= 1) continue;
 
+        // Fill the first chunks having no valleys.
         if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
             previous_row = all_valleys_ids[line.valleys_ids.front()]->position;
-            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col - 1;
-                 j++) {
+            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col - 1; j++) {
                 if (img_clone.at<Vec3b>(previous_row, j) != TEST_LINE_COLOR)
                     line.points.push_back(Point(previous_row, j));
                 if (save_img) img_clone.at<Vec3b>(previous_row, j) = TEST_LINE_COLOR;
