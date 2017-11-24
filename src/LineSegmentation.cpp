@@ -285,12 +285,9 @@ LineSegmentation::get_lines()
     return vector<cv::Mat>();
 }
 
-// ToDo @Samir55 REFACTOR
 int
 Chunk::find_peaks_valleys()
 {
-//    freopen("out.txt", "w", stdout);
-
     // Get the smoothed profile by applying a median filter of size 5.
     cv::Mat img_clone;
     cv::medianBlur(this->img, img_clone, 5);
@@ -310,7 +307,6 @@ Chunk::find_peaks_valleys()
         if (black_count) current_height++;
         else {
             if (current_height) {
-//                cout << "Current hieght " << current_height << endl;
                 lines_count++;
                 avg_height += current_height;
             }
@@ -321,9 +317,6 @@ Chunk::find_peaks_valleys()
     // Calculate the average height.
     if (lines_count) avg_height /= lines_count;
     avg_height = avg_height + (avg_height / 2.0);
-
-//    cout << "Lines count " << lines_count << endl;
-//    cout << "Average height " << avg_height << endl;
 
     // Detect Peaks.
     vector<Peak> initial_peaks;
@@ -336,11 +329,8 @@ Chunk::find_peaks_valleys()
                 initial_peaks.back().value = centre_val;
             }
             else if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
-                centre_val < initial_peaks.back().value) {
-
-            }
+                centre_val < initial_peaks.back().value) {}
             else {
-                // cout << "LEFT " << left_val << " CENTRE " << centre_val << " RIGHT " << right_val << endl;
                 initial_peaks.push_back(Peak(i, centre_val));
             }
         }
@@ -354,7 +344,6 @@ Chunk::find_peaks_valleys()
 
     // Sort peaks by least position.
     sort(initial_peaks.begin(), initial_peaks.end(), Peak::comp);
-
     this->peaks = initial_peaks;
 
     // Search for valleys between 2 peaks.
@@ -371,7 +360,8 @@ Chunk::find_peaks_valleys()
                     valley_black_count++;
                 }
             }
-            if (valley_black_count <= min_value) {
+            cout << avg_height << endl;
+            if (valley_black_count <= min_value && j < initial_peaks[i].position - max(50, avg_height/2)) {
                 min_value = valley_black_count;
                 min_position = j;
             }
@@ -382,15 +372,6 @@ Chunk::find_peaks_valleys()
         initial_valleys.back()->valley_id = int(all_valleys_ids.size());
         all_valleys_ids[initial_valleys.back()->valley_id] = new_valley;
     }
-
     this->valleys = initial_valleys;
-//    cout << "Peaks Count " << initial_peaks.size() << endl;
-//    for (auto peak:peaks) {
-//        cout << peak.position << " " << peak.value << endl;
-//    }
-//    cout << "Valleys Count " << initial_valleys.size() << endl;
-//    for (auto valley:valleys) {
-//        cout << valley->position << " " << valley->value << endl;
-//    }
     return int(ceil(avg_height));
 }
