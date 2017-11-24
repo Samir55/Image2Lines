@@ -2,16 +2,12 @@
 #define IMAGE2CHAR_UTILITIES_H_H
 #include <iostream>
 #include <cstdio>
-#include <string>
 #include <vector>
 #include <algorithm>
-#include <set>
 #include <map>
 #include <cstring>
 #include <cmath>
-#include <cmath>
 #include <cv.h>
-#include <highgui.h>
 #include <opencv/cv.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -29,7 +25,6 @@ struct Line {
     int height; ///< The height of the line region above this line separator.
 };
 
-///
 struct Peak {
     int position;
     int value;

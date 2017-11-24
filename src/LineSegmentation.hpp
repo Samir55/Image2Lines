@@ -1,0 +1,97 @@
+#include "utilities.h"
+
+#define CHUNKS_NUMBER 20
+#define TEST_LINE_COLOR cv::Vec3b(255, 0, 255)
+
+/// Image Chunk.
+class Chunk
+{
+public:
+    cv::Mat img;
+    ///< //grey level image
+    int order;
+    /// The index of the chunk.
+    int start_col;
+    ///< The start column position
+    int width;
+    ///< The width of the chunk.
+    vector<int> histogram;
+    ///< The values of the y histogram projection profile.
+    vector<Peak> peaks;
+    ///< The found peaks in this chunk.
+    vector<Valley *> valleys;
+    ///< The found valleys in this chunk.
+
+    Chunk()
+        : valleys(vector<Valley *>())
+    {}
+
+    /// Valleys and peaks detection in this image chunk.
+    /// \return int the average line height in this chunk.
+    int
+    find_peaks_valleys();
+};
+
+// Line Segmentation class.
+class LineSegmentation
+{
+public:
+    LineSegmentation(string path_of_image);
+
+    /// Generate the lines found in the saved image/
+    /// \return vector<cv::Mat> a vector contining each line as a 2D mat.
+    vector<cv::Mat>
+    get_lines();
+
+private:
+    cv::Mat color_img;
+    ///< Used for debugging only.
+    cv::Mat grey_img;
+    ///< The grey image.
+    cv::Mat binary_img;
+    ///< The preprocessed image.
+    vector<Chunk> chunks;
+    ///< The image chunks.
+    vector<Line> initial_lines;
+    ///< The initial lines.
+    vector<Region> line_regions;
+    ///< The regions of all found initial lines in the image.
+    vector<Rect> contours; /// The handwritten components found in the binary image.
+    int valleys_min_abs_dist; // ToDo Refactor.
+
+    /// Apply OTSU thresholding and Binarization to the grey image.
+    void
+    pre_process_image();
+
+    /// Find handwritten components found in the binary image.
+    void
+    find_contours();
+
+    /// Generate image chunks according to the current CHUNKS_NUMBER.
+    void
+    generate_chunks();
+
+    /// Get the initial (candidate lines).
+    void
+    get_initial_lines();
+
+    /// ToDo @Samir55
+    void
+    draw_image_with_lines(bool save_img = true);
+
+    /// Get the lines regions ( A 2D mat describing each line in the image).
+    void
+    get_line_regions();
+
+    /// Use Statistical approach to repair the initial lines.
+    void
+    repair_initial_lines();
+
+    /// Connect the nearest valleys found in image chunks to form an initial line in a recursive manner.
+    /// This function is called by find_initial_lines.
+    /// \param i integer The index of the chunk.
+    /// \param current_valley Valley The current valley.
+    /// \return Line a candidate(initial line)
+    Line
+    connect_valleys(int i, Valley *current_valley, Line &line);
+};
