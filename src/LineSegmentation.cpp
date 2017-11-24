@@ -244,6 +244,7 @@ LineSegmentation::get_line_regions()
                                      cv::Range(row_start, row_start + line.height), // Rows.
                                      cv::Range(0, this->binary_img.cols)); // Cols.
         cv::Mat covar, mean;
+
         // Calculate covariance and the mean of the region.
         cv::calcCovarMatrix(new_region, covar, mean, COVAR_NORMAL | COVAR_ROWS);
 
@@ -278,6 +279,7 @@ LineSegmentation::get_lines()
     this->find_contours();
     this->generate_chunks();
     this->get_initial_lines();
+    this->draw_image_with_lines();
     this->get_line_regions();
     this->repair_initial_lines();
     return vector<cv::Mat>();
@@ -369,7 +371,7 @@ Chunk::find_peaks_valleys()
                     valley_black_count++;
                 }
             }
-            if (valley_black_count < min_value) {
+            if (valley_black_count <= min_value) {
                 min_value = valley_black_count;
                 min_position = j;
             }

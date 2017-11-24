@@ -8,5 +8,5 @@ set(CMAKE_CXX_STANDARD 11)
 set(SOURCE_FILES
         src/main.cpp src/LineSegmentation.hpp src/LineSegmentation.cpp)
 
-add_executable(Image2Char ${SOURCE_FILES})
-target_link_libraries(Image2Char ${OpenCV_LIBS})
+add_executable(Image2Lines ${SOURCE_FILES})
+target_link_libraries(Image2Lines ${OpenCV_LIBS})
