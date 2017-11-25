@@ -265,12 +265,25 @@ LineSegmentation::repair_initial_lines()
 {
     // Loop over the regions.
     for (auto line : initial_lines) {
+        // ToDo @Samir55 Fix this.
+        if (line.index == this->initial_lines.size() -1) continue;
         for (auto point : line.points) {
             if (this->binary_img.at<uchar>(point.x, point.y) == 0) {
                 for (auto contour : this->contours) {
-                    if (contour.contains(point)) {
+                    if (contour.contains(point)) { // This is the contour the line has hit.
+                        // Get the regions.
+                        int region_above = line.index, region_below = line.index + 1;
+
                         // Calculate probabilities.
-                        // Calculate
+                        // ToDo @Samir55 Ignore: if the contour height greater than the average height.
+                        double prob_above = 1.0, prob_below = 1.0;
+                        for (int i = contour.tl().x; i < contour.height; i++) {
+                            for (int j = contour.tl().y; j < contour.width; j++) {
+                                if (binary_img.at<uchar>(i, j) == 255) continue;
+                                
+                            }
+                        }
+                        // Assign to the highest probability.
                     }
                 }
             }
