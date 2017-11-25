@@ -279,9 +279,9 @@ LineSegmentation::repair_initial_lines() {
                             Mat point = Mat::zeros(1, 2, CV_32F);
                             point.at<float>(0, 0) = i;
                             point.at<float>(0, 1) = j;
-                            prob_above *= biVarGaussianDensity(point, this->line_regions[region_above].mean,
+                            prob_above *= Utilities::biVarGaussianDensity(point, this->line_regions[region_above].mean,
                                                                this->line_regions[region_above].covariance);
-                            prob_below *= biVarGaussianDensity(point, this->line_regions[region_below].mean,
+                            prob_below *= Utilities::biVarGaussianDensity(point, this->line_regions[region_below].mean,
                                                                this->line_regions[region_below].covariance);
                         }
                     }
