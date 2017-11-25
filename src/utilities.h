@@ -21,8 +21,10 @@ using namespace std;
 /// A class representing the separator between line regions.
 struct Line
 {
-    vector<valley_id> valleys_ids; ///<
+    int index; ///< Index of the line in the vector.
+    vector<valley_id> valleys_ids; ///< The ids of the valleys.
     vector<Point> points; ///< The points representing the line.
+    int start_row_position; ///< The row at which the region starts.
     int height; ///< The height of the line region above this line separator.
 };
 

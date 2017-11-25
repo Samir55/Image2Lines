@@ -158,9 +158,12 @@ LineSegmentation::get_initial_lines()
 
             // Start a new line having the current valley and connect it with others in the left.
             Line new_line;
+            new_line.index = int(this->initial_lines.size());
             valley->used = true;
             new_line.valleys_ids.push_back(valley->valley_id);
-            this->initial_lines.push_back(connect_valleys(i - 1, valley, new_line));
+            new_line = connect_valleys(i - 1, valley, new_line);
+            if (new_line.valleys_ids.size() > 1)
+                this->initial_lines.push_back(new_line);
         }
     }
 }
@@ -171,59 +174,67 @@ LineSegmentation::draw_image_with_lines(bool save_img)
 {
     cv::Mat img_clone = this->color_img;
 
-    int last_height = 0;
+    int last_min_position = 0;
     for (auto &line : this->initial_lines) {
-        int line_height = 0;
+        if (line.valleys_ids.size() <= 1) continue; // ignore lines having only 1 valley.
+//        cout << "Number of valleys is " << line.valleys_ids.size() << endl;
+        int c = 0;
+        int min_row_position = 0; // The minimum row position in the line.
+        int max_row_position = 0; // The maximum row position in the line.
+
         // Sort the valleys according to their chunk number.
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
         int previous_row = 0;
-        if (line.valleys_ids.size() <= 1) continue;
 
-        // Fill the first chunks having no valleys.
+        // Draw the line in the first chunks having no valleys.
         if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
             previous_row = all_valleys_ids[line.valleys_ids.front()]->position;
-            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col - 1; j++) {
-                if (img_clone.at<Vec3b>(previous_row, j) != TEST_LINE_COLOR)
+            max_row_position = min_row_position = previous_row;
+            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col; j++) {
+                if (c++ == j)
                     line.points.push_back(Point(previous_row, j));
                 if (save_img) img_clone.at<Vec3b>(previous_row, j) = TEST_LINE_COLOR;
-                line_height = max(line_height, previous_row);
             }
         }
 
+        // Draw the line between the valleys.
         for (auto id : line.valleys_ids) {
             int chunk_order = all_valleys_ids[id]->chunk_order;
             int chunk_row = all_valleys_ids[id]->position;
             int chunk_width = chunks[all_valleys_ids[id]->chunk_order].width;
 
-            if (previous_row != chunk_row) {
-                if (img_clone.at<Vec3b>(min(previous_row, chunk_row), this->chunks[chunk_order].start_col - 1)
-                    != TEST_LINE_COLOR)
-                    line.points.push_back(Point(min(previous_row, chunk_row), this->chunks[chunk_order].start_col - 1));
-                for (auto i = int(min(previous_row, chunk_row)); i < int(max(previous_row, chunk_row)); i++) {
-                    if (save_img) img_clone.at<Vec3b>(i, this->chunks[chunk_order].start_col - 1) = TEST_LINE_COLOR;
-                    line_height = max(line_height, i);
-                }
-                previous_row = chunk_row;
-            }
-
-            for (int j = this->chunks[chunk_order].start_col;
-                 j < this->chunks[chunk_order].start_col + chunk_width; j++) {
-                if (img_clone.at<Vec3b>(previous_row, j) != TEST_LINE_COLOR)
+            for (int j = this->chunks[chunk_order].start_col; j < this->chunks[chunk_order].start_col + chunk_width;
+                 j++) {
+                min_row_position = min(min_row_position, chunk_row);
+                max_row_position = max(max_row_position, chunk_row);
+                if (c++ == j)
                     line.points.push_back(Point(chunk_row, j));
                 if (save_img) img_clone.at<Vec3b>(chunk_row, j) = TEST_LINE_COLOR;
-                line_height = max(line_height, chunk_row);
             }
+
+            // Draw the vertical line in case of different valley row positions.
+            if (previous_row != chunk_row) {
+                for (auto i = int(min(previous_row, chunk_row)) + 1; i < int(max(previous_row, chunk_row)); i++) {
+                    if (save_img) img_clone.at<Vec3b>(i, this->chunks[chunk_order].start_col) = TEST_LINE_COLOR;
+                }
+                previous_row = chunk_row;
+                min_row_position = min(min_row_position, chunk_row);
+                max_row_position = max(max_row_position, chunk_row);
+            }
+
+            // Draw lines in the last chunks having no valleys.
             if (chunk_order == all_valleys_ids[line.valleys_ids.back()]->chunk_order) {
-                for (int j = this->chunks[chunk_order].start_col; j < color_img.cols; j++) {
-                    if (img_clone.at<Vec3b>(previous_row, j) != TEST_LINE_COLOR)
+                for (int j = this->chunks[chunk_order].start_col + chunk_width; j < color_img.cols; j++) {
+                    if (c++ == j)
                         line.points.push_back(Point(chunk_row, j));
                     if (save_img) img_clone.at<Vec3b>(chunk_row, j) = TEST_LINE_COLOR;
-                    line_height = max(line_height, chunk_row);
                 }
             }
         }
-        line.height = line_height - last_height;
-        last_height = line_height;
+        line.start_row_position = last_min_position;
+        line.height = max_row_position - last_min_position;
+        last_min_position = min_row_position;
+//        cout << line.points.size() << " " << img_clone.cols << endl;
     }
     cv::imwrite("Initial_Lines.jpg", img_clone); // For debugging.
 }
@@ -233,33 +244,32 @@ void
 LineSegmentation::get_line_regions()
 {
     int idx = 0;
-    int row_start = 0;
-
     Line &line = this->initial_lines.front();
     for (auto &line : this->initial_lines) {
-        if (line.valleys_ids.size() <= 1) continue;
+        if (line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
 
-        cv::Mat new_region = cv::Mat(binary_img,
-                                     cv::Range(row_start, row_start + line.height), // Rows.
-                                     cv::Range(0, this->binary_img.cols)); // Cols.
-        cv::Mat covar, mean;
+        cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
 
+        // Repair Mat.
+        int k = 0;
+        cout << line.index << " " << line.index + 1 << endl;
+        for (int c = 0; c < binary_img.cols; c++) {
+            cout <<  line.points[c].x <<  " " << initial_lines[line.index + 1].points[c].x <<endl;
+            k = 0;
+            for (int i = line.points[c].x; i < initial_lines[line.index + 1].points[c].x; i++) {
+                new_region.at<uchar>(k, c) = this->binary_img.at<uchar>(i, c);
+                k++;
+            }
+        }
         // Calculate covariance and the mean of the region.
-        cv::calcCovarMatrix(new_region, covar, mean, COVAR_NORMAL | COVAR_ROWS);
+        cv::Mat covar, mean;
+//        cv::calcCovarMatrix(new_region, covar, mean, COVAR_NORMAL | COVAR_ROWS);
 
         cv::imwrite(string("test") + to_string(idx++) + ".jpg",
                     new_region); // ToDo @Samir: Remove as it's for debugging.
 
         this->line_regions.push_back(Region(new_region, covar, mean));
-        row_start += line.height;
     }
-    //        cv::Mat new_region = cv::Mat((line.height) ,this->binary_img.cols, CV_8UC3);
-//        for (int i_col = 0; i_col < this->binary_img.cols; i_col++) {
-//            for (int i_row = 0; i_row < new_region.rows; i_row++) {
-//                if (i_row + row_start > line.points[i_col].x) {}
-//                else {new_region.at<int>(i_row, i_col) = 1;}
-//            }
-//        }
 }
 
 void
@@ -359,8 +369,8 @@ Chunk::find_peaks_valleys()
                     valley_black_count++;
                 }
             }
-            cout << avg_height << endl;
-            if (valley_black_count <= min_value && j < initial_peaks[i].position - max(50, avg_height/2)) {
+//            cout << avg_height << endl;
+            if (valley_black_count <= min_value && j < initial_peaks[i].position - max(50, avg_height / 2)) {
                 min_value = valley_black_count;
                 min_position = j;
             }
