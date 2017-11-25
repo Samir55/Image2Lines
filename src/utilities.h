@@ -85,17 +85,32 @@ struct Valley {
 struct Region {
     cv::Mat region;
     cv::Mat covar;
-    cv::Mat mean;
+    cv::Vec2f mean;
 
     Region(cv::Mat a, cv::Mat b, cv::Mat c) {
-        region = a.clone();;
+        region = a.clone();
+        calculate_mean();
     }
 
     ///
     void
     calculate_mean() {
-        
-
+        mean[0] = mean[1] = 0.0f;
+        int n = 0;
+        for (int i = 0; i < region.rows; i++) {
+            for (int j =0; j < region.cols; j++) {
+                // if white pixel continue.
+                if (region.at<uchar>(i, j) == 255) continue;
+                if (n == 0) {
+                    n = n + 1;
+                    mean = Vec2f(i, j);
+                } else {
+                    mean = (n-1.0)/n * mean + 1.0/n * Vec2f(i, j);
+                    n = n + 1.0;
+                }
+            }
+        }
+        cout << mean[0] << " " << mean[1] << endl;
     }
 
     ///
