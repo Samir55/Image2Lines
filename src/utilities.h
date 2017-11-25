@@ -9,6 +9,7 @@
 #include <cstring>
 #include <cmath>
 #include <cv.h>
+#include <math.h>
 #include <opencv/cv.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -18,6 +19,17 @@ typedef int valley_id;
 
 using namespace cv;
 using namespace std;
+
+/// Calculate bi-variate Gaussian density
+float biVarGaussianDensity(Mat point, Vec2f mean, Mat coVariance) {
+    point(0, 0) -= mean[0];
+    point(1, 0) -= mean[1];
+
+    Mat pointTrans;
+    transpose(point, pointTrans);
+
+    return sqrt(determinant(coVariance) * 2 * M_PI) * (point * coVariance.inv() * pointTrans);
+}
 
 /// A class representing the separator between line regions.
 struct Line {
