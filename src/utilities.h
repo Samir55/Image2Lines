@@ -85,7 +85,7 @@ struct Valley {
 struct Region {
     cv::Mat region;
     cv::Mat covariance;
-    cv::Mat mean;
+    cv::Vec2f mean;
 
     Region(cv::Mat a, cv::Mat b, cv::Mat c) {
         region = a.clone();
@@ -111,37 +111,33 @@ struct Region {
                 }
             }
         }
+        cout << mean[0] << " " << mean[1] << endl;
     }
 
     ///
     void
     calculate_covariance() {
-        Mat m1 = Mat::zeros(2, region.rows * region.cols, CV_32F), m2(region.rows * region.cols, 2, CV_32F);
+        covariance = Mat::zeros(2, 2, CV_32F);
         int n = 0;
-        for (int i = 0; i < region.rows; ++i) {
-            for (int j = 0; j < region.cols; ++j) {
-                if (region.at(i, j) == 0) {
-                    m1.at(n, 0) = i - mean.at(0);
-                    m1.at(n, 1) = j - mean.at(1);
 
-                    m2.at(0, n) = i - mean.at(0);
-                    m2.at(1, n) = j - mean.at(1);
+        for (int i = 0; i < region.rows; i++) {
+            for (int j = 0; j < region.cols; j++) {
+                // if white pixel continue.
+                if (region.at<uchar>(i, j) == 255) continue;
 
-                    n++;
-                }
+                Mat point = Mat::zeros(2, 1, CV_32F);
+                point.at<float>(0, 0) = i - mean[0];
+                point.at<float>(1, 0) = j - mean[1];
+
+                Mat pointTrans;
+                transpose(point, pointTrans);
+
+                covariance = ((n - 2.0) / (n - 1)) * covariance + (1.0 / (n - 1)) * (point * pointTrans);
+
+                n++;
+                if (n == 1) n++;
             }
         }
-        m1 = Mat(m1, 2, Range(0, n));
-        m2 = Mat(m21, Range(0, n), 2);
-
-        covariance = ((m1 * m2) / n);
-        for (int i = 0; i < covariance.rows; ++i) {
-            for (int j = 0; j < covariance.cols; ++j) {
-                cout << covariance.at(i, j) << " ";
-            }
-            cout << endl;
-        }
-        this.covariance = covariance.clone();
     }
 
 };
