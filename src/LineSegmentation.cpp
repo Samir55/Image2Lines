@@ -243,39 +243,43 @@ LineSegmentation::draw_image_with_lines(bool save_img)
 void
 LineSegmentation::get_line_regions()
 {
-    int idx = 0;
-    Line &line = this->initial_lines.front();
     for (auto &line : this->initial_lines) {
-        if (line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
+        if (line.valleys_ids.size() <= 1 || line.points.size() <= 1 || line.index == initial_lines.size() -1) continue;
+
+        cout << line.height << " " << this->binary_img.cols <<endl;
 
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
 
-        // Repair Mat.
-        int k = 0;
-        cout << line.index << " " << line.index + 1 << endl;
+        // Fill region
         for (int c = 0; c < binary_img.cols; c++) {
-            cout <<  line.points[c].x <<  " " << initial_lines[line.index + 1].points[c].x <<endl;
-            k = 0;
             for (int i = line.points[c].x; i < initial_lines[line.index + 1].points[c].x; i++) {
-                new_region.at<uchar>(k, c) = this->binary_img.at<uchar>(i, c);
-                k++;
+                new_region.at<uchar>(i - initial_lines[line.index + 1].start_row_position, c) = this->binary_img.at<uchar>(i, c);
             }
         }
-        // Calculate covariance and the mean of the region.
-        cv::Mat covar, mean;
-//        cv::calcCovarMatrix(new_region, covar, mean, COVAR_NORMAL | COVAR_ROWS);
 
-        cv::imwrite(string("test") + to_string(idx++) + ".jpg",
-                    new_region); // ToDo @Samir: Remove as it's for debugging.
+        cv::imwrite(string("test") + to_string(line.index) + ".jpg",
+            new_region); // ToDo @Samir: Remove as it's for debugging.
 
-        this->line_regions.push_back(Region(new_region, covar, mean));
+        this->line_regions.push_back(Region(new_region, cv::Mat(), cv::Mat()));
     }
 }
 
 void
 LineSegmentation::repair_initial_lines()
 {
-    // Loop over the lines.
+    // Loop over the regions.
+    for (auto line : initial_lines) {
+        for (auto point : line.points) {
+            if (this->binary_img.at<uchar>(point.x, point.y) == 0) {
+                for (auto contour : this->contours) {
+                    if (contour.contains(point)) {
+                        // Calculate probabilities.
+                        // Calculate
+                    }
+                }
+            }
+        }
+    }
     // When hit get the hit component and get the above and the below line regions.
     // Apply to each pixel in each line region P(p |μ,Σ) = |2πΣ|1 (p − μ)Σ−1(p − μ)T to get 2 probabilities.
     // Assign the region to the correct line region and update the points of the separator line.
