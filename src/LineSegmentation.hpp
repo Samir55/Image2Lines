@@ -90,6 +90,10 @@ private:
     void
     repair_initial_lines();
 
+    ///
+    void
+    draw_final_lines();
+
     /// Connect the nearest valleys found in image chunks to form an initial line in a recursive manner.
     /// This function is called by find_initial_lines.
     /// \param i integer The index of the chunk.

@@ -165,7 +165,7 @@ LineSegmentation::get_initial_lines() {
 // ToDo @Samir55 REFACTOR
 void
 LineSegmentation::draw_image_with_lines(bool save_img) {
-    cv::Mat img_clone = this->color_img;
+    cv::Mat img_clone = this->color_img.clone();
 
     int last_min_position = 0;
     for (auto &line : this->initial_lines) {
@@ -230,6 +230,17 @@ LineSegmentation::draw_image_with_lines(bool save_img) {
     cv::imwrite("Initial_Lines.jpg", img_clone); // For debugging.
 }
 
+void
+LineSegmentation::draw_final_lines() {
+    cv::Mat img_clone = this->color_img.clone();
+    for (auto line : initial_lines) {
+        for (auto point : line.points) {
+            img_clone.at<Vec3b>(point.x, point.y) = TEST_LINE_COLOR;
+        }
+    }
+    cv::imwrite("Final_Lines.jpg", img_clone); // For debugging.
+}
+
 // Todo @TheAbzo implement the commented part.
 void
 LineSegmentation::get_line_regions() {
@@ -256,33 +267,36 @@ LineSegmentation::get_line_regions() {
 void
 LineSegmentation::repair_initial_lines() {
     // Loop over the regions.
-    for (auto line : initial_lines) {
+    for (auto &line : initial_lines) {
         // ToDo @Samir55 Fix this.
         if (line.index == this->initial_lines.size() - 1) continue;
 
         for (int i = 0; i < line.points.size(); i++) {
             Point &point = line.points[i];
             if (this->binary_img.at<uchar>(point.x, point.y) == 255) continue;
+            int x = line.points[i].x, y = line.points[i].y; // TODO @Samir55 FIX.
 
             for (auto contour : this->contours) {
-                if (contour.contains(point)) { // This is the contour the line has hit.
+                if (y  >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
+                    cout << "HIT Contour at " << point.x  << " , " << point.y  << endl;
                     // Get the regions.
                     int region_above = line.index, region_below = line.index + 1;
 
                     // Calculate probabilities.
                     // ToDo @Samir55 Ignore: if the contour height greater than the average height.
                     double prob_above = 1.0, prob_below = 1.0;
-                    for (int i = contour.tl().x; i < contour.height; i++) {
-                        for (int j = contour.tl().y; j < contour.width; j++) {
-                            if (binary_img.at<uchar>(i, j) == 255) continue;
+                    for (int i = contour.tl().x; i < contour.tl().x + contour.width; i++) {
+                        for (int j = contour.tl().y; j < contour.tl().y + contour.height; j++) {
+                            if (binary_img.at<uchar>(j, i) == 255) continue;
 
                             Mat point = Mat::zeros(1, 2, CV_32F);
                             point.at<float>(0, 0) = i;
                             point.at<float>(0, 1) = j;
                             prob_above *= Utilities::biVarGaussianDensity(point, this->line_regions[region_above].mean,
-                                                               this->line_regions[region_above].covariance);
+                                                                          this->line_regions[region_above].covariance);
                             prob_below *= Utilities::biVarGaussianDensity(point, this->line_regions[region_below].mean,
-                                                               this->line_regions[region_below].covariance);
+                                                                          this->line_regions[region_below].covariance);
+                            cout << "Probability above is " << prob_above << " Probability below is " << prob_below << endl;
                         }
                     }
                     // Assign to the highest probability.
@@ -312,6 +326,7 @@ LineSegmentation::get_lines() {
     this->draw_image_with_lines();
     this->get_line_regions();
     this->repair_initial_lines();
+    this->draw_final_lines();
     return vector<cv::Mat>();
 }
 
