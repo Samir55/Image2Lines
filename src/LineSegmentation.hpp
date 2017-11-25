@@ -84,6 +84,9 @@ private:
     get_line_regions();
 
     /// Use Statistical approach to repair the initial lines.
+    // When hitting get the hit component and get the above and the below line regions.
+    // Apply to each pixel in each line region P(p |μ,Σ) = |2πΣ|1 (p − μ)Σ−1(p − μ)T to get 2 probabilities.
+    // Assign the region to the correct line region and update the points of the separator line.
     void
     repair_initial_lines();
 

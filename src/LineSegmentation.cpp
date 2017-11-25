@@ -3,15 +3,13 @@
 map<valley_id, Valley *> all_valleys_ids; ///< A Map from valley id to it's pointer.
 
 LineSegmentation::LineSegmentation(string path_of_image)
-    : valleys_min_abs_dist(0)
-{
+        : valleys_min_abs_dist(0) {
     this->color_img = imread(path_of_image, CV_LOAD_IMAGE_COLOR);
     this->grey_img = imread(path_of_image, CV_LOAD_IMAGE_GRAYSCALE);
 }
 
 void
-LineSegmentation::pre_process_image()
-{
+LineSegmentation::pre_process_image() {
     // More filters are about to be applied.
     cv::Mat preprocessed_img, smoothed_img;
 
@@ -23,8 +21,7 @@ LineSegmentation::pre_process_image()
 }
 
 void
-LineSegmentation::find_contours()
-{
+LineSegmentation::find_contours() {
     cv::Mat img_clone = this->binary_img;
 
     vector<vector<Point>> contours;
@@ -76,8 +73,7 @@ LineSegmentation::find_contours()
 }
 
 void
-LineSegmentation::generate_chunks()
-{
+LineSegmentation::generate_chunks() {
     int width = binary_img.cols;
     int chunk_width = width / CHUNKS_NUMBER;
 
@@ -97,8 +93,7 @@ LineSegmentation::generate_chunks()
 }
 
 Line
-LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line)
-{
+LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line) {
     if (i == 0 || chunks[i].valleys.empty()) return line;
 
     // Choose the closest valley in right chunk to the start valley.
@@ -131,8 +126,7 @@ LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line)
 }
 
 void
-LineSegmentation::get_initial_lines()
-{
+LineSegmentation::get_initial_lines() {
     int number_of_heights = 0;
 
     // Get the histogram of the first 5 chunks and get the overall average line height.
@@ -170,8 +164,7 @@ LineSegmentation::get_initial_lines()
 
 // ToDo @Samir55 REFACTOR
 void
-LineSegmentation::draw_image_with_lines(bool save_img)
-{
+LineSegmentation::draw_image_with_lines(bool save_img) {
     cv::Mat img_clone = this->color_img;
 
     int last_min_position = 0;
@@ -239,64 +232,79 @@ LineSegmentation::draw_image_with_lines(bool save_img)
 
 // Todo @TheAbzo implement the commented part.
 void
-LineSegmentation::get_line_regions()
-{
+LineSegmentation::get_line_regions() {
     for (auto &line : this->initial_lines) {
-        if (line.valleys_ids.size() <= 1 || line.points.size() <= 1 || line.index == initial_lines.size() -1) continue;
+        if (line.valleys_ids.size() <= 1 || line.points.size() <= 1 || line.index == initial_lines.size() - 1) continue;
 
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
 
         // Fill region
         for (int c = 0; c < binary_img.cols; c++) {
             for (int i = line.points[c].x; i < initial_lines[line.index + 1].points[c].x; i++) {
-                new_region.at<uchar>(i - initial_lines[line.index + 1].start_row_position, c) = this->binary_img.at<uchar>(i, c);
+                new_region.at<uchar>(i - initial_lines[line.index + 1].start_row_position,
+                                     c) = this->binary_img.at<uchar>(i, c);
             }
         }
 
         cv::imwrite(string("test") + to_string(line.index) + ".jpg",
-            new_region); // ToDo @Samir: Remove as it's for debugging.
+                    new_region); // ToDo @Samir: Remove as it's for debugging.
 
         this->line_regions.push_back(Region(new_region, cv::Mat(), cv::Mat()));
     }
 }
 
 void
-LineSegmentation::repair_initial_lines()
-{
+LineSegmentation::repair_initial_lines() {
     // Loop over the regions.
     for (auto line : initial_lines) {
         // ToDo @Samir55 Fix this.
-        if (line.index == this->initial_lines.size() -1) continue;
-        for (auto point : line.points) {
-            if (this->binary_img.at<uchar>(point.x, point.y) == 0) {
-                for (auto contour : this->contours) {
-                    if (contour.contains(point)) { // This is the contour the line has hit.
-                        // Get the regions.
-                        int region_above = line.index, region_below = line.index + 1;
+        if (line.index == this->initial_lines.size() - 1) continue;
 
-                        // Calculate probabilities.
-                        // ToDo @Samir55 Ignore: if the contour height greater than the average height.
-                        double prob_above = 1.0, prob_below = 1.0;
-                        for (int i = contour.tl().x; i < contour.height; i++) {
-                            for (int j = contour.tl().y; j < contour.width; j++) {
-                                if (binary_img.at<uchar>(i, j) == 255) continue;
-                                
-                            }
+        for (int i = 0; i < line.points.size(); i++) {
+            Point &point = line.points[i];
+            if (this->binary_img.at<uchar>(point.x, point.y) == 255) continue;
+
+            for (auto contour : this->contours) {
+                if (contour.contains(point)) { // This is the contour the line has hit.
+                    // Get the regions.
+                    int region_above = line.index, region_below = line.index + 1;
+
+                    // Calculate probabilities.
+                    // ToDo @Samir55 Ignore: if the contour height greater than the average height.
+                    double prob_above = 1.0, prob_below = 1.0;
+                    for (int i = contour.tl().x; i < contour.height; i++) {
+                        for (int j = contour.tl().y; j < contour.width; j++) {
+                            if (binary_img.at<uchar>(i, j) == 255) continue;
+
+                            Mat point = Mat::zeros(1, 2, CV_32F);
+                            point.at<float>(0, 0) = i;
+                            point.at<float>(0, 1) = j;
+                            prob_above *= biVarGaussianDensity(point, this->line_regions[region_above].mean,
+                                                               this->line_regions[region_above].covariance);
+                            prob_below *= biVarGaussianDensity(point, this->line_regions[region_below].mean,
+                                                               this->line_regions[region_below].covariance);
                         }
-                        // Assign to the highest probability.
                     }
+                    // Assign to the highest probability.
+                    cout << "Probability above is " << prob_above << " Probability below is " << prob_below << endl;
+                    int new_row;
+                    if (prob_above - 0.00000001 > prob_below) {
+                        new_row = contour.br().x;
+                    } else {
+                        new_row = contour.tl().x;
+                    }
+                    for (int k = point.y; k < point.y + contour.width; k++) {
+                        point.y = new_row;
+                    }
+                    i += contour.width - 1;
                 }
             }
         }
     }
-    // When hit get the hit component and get the above and the below line regions.
-    // Apply to each pixel in each line region P(p |μ,Σ) = |2πΣ|1 (p − μ)Σ−1(p − μ)T to get 2 probabilities.
-    // Assign the region to the correct line region and update the points of the separator line.
 }
 
 vector<cv::Mat>
-LineSegmentation::get_lines()
-{
+LineSegmentation::get_lines() {
     this->pre_process_image();
     this->find_contours();
     this->generate_chunks();
@@ -308,8 +316,7 @@ LineSegmentation::get_lines()
 }
 
 int
-Chunk::find_peaks_valleys()
-{
+Chunk::find_peaks_valleys() {
     // Get the smoothed profile by applying a median filter of size 5.
     cv::Mat img_clone;
     cv::medianBlur(this->img, img_clone, 5);
@@ -349,9 +356,8 @@ Chunk::find_peaks_valleys()
                 centre_val >= initial_peaks.back().value) { // Try to get the largest peak in same region.
                 initial_peaks.back().position = i;
                 initial_peaks.back().value = centre_val;
-            }
-            else if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
-                centre_val < initial_peaks.back().value) {}
+            } else if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
+                       centre_val < initial_peaks.back().value) {}
             else {
                 initial_peaks.push_back(Peak(i, centre_val));
             }

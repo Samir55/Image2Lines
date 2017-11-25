@@ -21,7 +21,7 @@ using namespace cv;
 using namespace std;
 
 /// Calculate bi-variate Gaussian density
-float biVarGaussianDensity(Mat point, Vec2f mean, Mat coVariance) {
+float biVarGaussianDensity(cv::Mat point, Vec2f mean, cv::Mat coVariance) {
     point(0, 0) -= mean[0];
     point(1, 0) -= mean[1];
 
