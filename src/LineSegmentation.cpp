@@ -177,7 +177,6 @@ LineSegmentation::draw_image_with_lines(bool save_img)
     int last_min_position = 0;
     for (auto &line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1) continue; // ignore lines having only 1 valley.
-//        cout << "Number of valleys is " << line.valleys_ids.size() << endl;
         int c = 0;
         int min_row_position = 0; // The minimum row position in the line.
         int max_row_position = 0; // The maximum row position in the line.
@@ -234,7 +233,6 @@ LineSegmentation::draw_image_with_lines(bool save_img)
         line.start_row_position = last_min_position;
         line.height = max_row_position - last_min_position;
         last_min_position = min_row_position;
-//        cout << line.points.size() << " " << img_clone.cols << endl;
     }
     cv::imwrite("Initial_Lines.jpg", img_clone); // For debugging.
 }
@@ -245,8 +243,6 @@ LineSegmentation::get_line_regions()
 {
     for (auto &line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1 || line.points.size() <= 1 || line.index == initial_lines.size() -1) continue;
-
-        cout << line.height << " " << this->binary_img.cols <<endl;
 
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
 
@@ -373,7 +369,6 @@ Chunk::find_peaks_valleys()
                     valley_black_count++;
                 }
             }
-//            cout << avg_height << endl;
             if (valley_black_count <= min_value && j < initial_peaks[i].position - max(50, avg_height / 2)) {
                 min_value = valley_black_count;
                 min_position = j;
