@@ -22,11 +22,21 @@ using namespace std;
 
 /// A class representing the separator between line regions.
 struct Line {
-    int index; ///< Index of the line in the vector.
-    vector<valley_id> valleys_ids; ///< The ids of the valleys.
-    vector<Point> points; ///< The points representing the line.
-    int start_row_position; ///< The row at which the region starts.
-    int height; ///< The height of the line region above this line separator.
+    int index;
+    ///< Index of the line in the vector.
+    vector<valley_id> valleys_ids;
+    ///< The ids of the valleys.
+    int start_row_position;
+    ///< The row at which the region starts.
+    int height;
+    ///< The height of the line region above this line separator.
+    vector<Point> points;
+    ///< The points representing the line.
+
+    Line (int idx, int initial_valley_id) : start_row_position(-1), height(0), points(vector<Point>()) {
+        this->index = idx;
+        valleys_ids.push_back(initial_valley_id);
+    }
 };
 
 struct Peak {
@@ -88,7 +98,7 @@ struct Region {
     cv::Mat covariance;
     cv::Vec2f mean;
 
-    Region(cv::Mat a, cv::Mat b, cv::Mat c) {
+    Region(cv::Mat a) {
         region = a.clone();
         calculate_mean();
         calculate_covariance();
@@ -146,7 +156,7 @@ struct Region {
 
 struct Utilities {
 
-    ///// Calculate bi-variate Gaussian density
+    /// Calculate bi-variate Gaussian density.
     static float biVarGaussianDensity(Mat point, Vec2f mean, Mat coVariance) {
         point.at<float>(0, 0) -= mean[0];
         point.at<float>(0, 1) -= mean[1];

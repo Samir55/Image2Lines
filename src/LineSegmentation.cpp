@@ -2,8 +2,7 @@
 
 map<valley_id, Valley *> all_valleys_ids; ///< A Map from valley id to it's pointer.
 
-LineSegmentation::LineSegmentation(string path_of_image)
-        : valleys_min_abs_dist(0) {
+LineSegmentation::LineSegmentation(string path_of_image) {
     this->color_img = imread(path_of_image, CV_LOAD_IMAGE_COLOR);
     this->grey_img = imread(path_of_image, CV_LOAD_IMAGE_GRAYSCALE);
 }
@@ -16,7 +15,7 @@ LineSegmentation::pre_process_image() {
     // Noise reduction (Currently a basic filter).
     cv::blur(grey_img, smoothed_img, Size(3, 3), Point(-1, -1));
 
-    // OTSU thresholding and Binarization.
+    // OTSU threshold and Binarization.
     cv::threshold(smoothed_img, binary_img, 0.0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
 }
 
@@ -77,29 +76,23 @@ LineSegmentation::generate_chunks() {
     int width = binary_img.cols;
     int chunk_width = width / CHUNKS_NUMBER;
 
-    vector<Chunk> generated_chunks(CHUNKS_NUMBER);
-
     for (int i_chunk = 0, start_pixel = 0; i_chunk < CHUNKS_NUMBER; ++i_chunk) {
-        generated_chunks[i_chunk].order = i_chunk;
-        generated_chunks[i_chunk].start_col = start_pixel;
-        generated_chunks[i_chunk].width = chunk_width;
-        generated_chunks[i_chunk].img = cv::Mat(binary_img,
-                                                cv::Range(0, binary_img.rows), // Rows.
-                                                cv::Range(start_pixel, start_pixel + chunk_width)); // Cols.
+        this->chunks.push_back(Chunk(i_chunk, start_pixel, chunk_width, cv::Mat(binary_img,
+                                                                                cv::Range(0, binary_img.rows), // Rows.
+                                                                                cv::Range(start_pixel, start_pixel +
+                                                                                                       chunk_width)))); // Cols.
         start_pixel += chunk_width;
-        cv::imwrite(to_string(i_chunk + 1) + ".jpg", generated_chunks[i_chunk].img); // For debugging.
+        cv::imwrite(to_string(i_chunk + 1) + ".jpg", this->chunks[i_chunk].img); // For debugging.
     }
-    this->chunks = generated_chunks;
 }
 
 Line
-LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line) {
+LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line, int valleys_min_abs_dist) {
     if (i == 0 || chunks[i].valleys.empty()) return line;
 
     // Choose the closest valley in right chunk to the start valley.
     int connected_to = -1;
     int min_distance = 100000;
-
     for (int j = 0; j < this->chunks[i].valleys.size(); j++) {
         Valley *valley = this->chunks[i].valleys[j];
         // Check if the valley is not connected to any other valley.
@@ -107,8 +100,7 @@ LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line) {
 
         int dist = current_valley->position - valley->position;
         dist = dist < 0 ? -dist : dist;
-
-        if (min_distance > dist && dist <= this->valleys_min_abs_dist) {
+        if (min_distance > dist && dist <= valleys_min_abs_dist) {
             min_distance = dist, connected_to = j;
         }
     }
@@ -121,41 +113,37 @@ LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line) {
     line.valleys_ids.push_back(this->chunks[i].valleys[connected_to]->valley_id);
     Valley *v = this->chunks[i].valleys[connected_to];
     v->used = true;
-
-    return connect_valleys(i - 1, v, line);
+    return connect_valleys(i - 1, v, line, valleys_min_abs_dist);
 }
 
 void
 LineSegmentation::get_initial_lines() {
-    int number_of_heights = 0;
+    int number_of_heights = 0, valleys_min_abs_dist = 0;
 
-    // Get the histogram of the first 5 chunks and get the overall average line height.
-    for (int i = 0; i < 5; i++) {
+    // Get the histogram of the first CHUNKS_TO_BE_PROCESSED and get the overall average line height.
+    for (int i = 0; i < CHUNKS_TO_BE_PROCESSED; i++) {
         int avg_height = this->chunks[i].find_peaks_valleys();
-        if (avg_height)
-            number_of_heights++;
-        this->valleys_min_abs_dist += avg_height;
+        if (avg_height) number_of_heights++;
+        valleys_min_abs_dist += avg_height;
     }
-    this->valleys_min_abs_dist /= number_of_heights;
+    valleys_min_abs_dist /= number_of_heights;
 
-    // Start form the 5th chunk.
-    for (int i = 4; i >= 0; i--) {
+    // Start form the CHUNKS_TO_BE_PROCESSED chunk.
+    for (int i = CHUNKS_TO_BE_PROCESSED - 1; i >= 0; i--) {
         // Check if the chunk is empty.
         if (chunks[i].valleys.empty()) continue;
 
         // Connect each valley with the nearest ones in the left chunks.
         for (auto &valley : chunks[i].valleys) {
-            // Ignore the already connected valleys;
+            // Ignore the already connected valleys.
             if (valley->used) continue;
 
             // ToDo @Samir55 ignore if there one used before having a close level value to it.
 
             // Start a new line having the current valley and connect it with others in the left.
-            Line new_line;
-            new_line.index = int(this->initial_lines.size());
             valley->used = true;
-            new_line.valleys_ids.push_back(valley->valley_id);
-            new_line = connect_valleys(i - 1, valley, new_line);
+            Line new_line(this->initial_lines.size(), valley->valley_id);
+            new_line = connect_valleys(i - 1, valley, new_line, valleys_min_abs_dist);
             if (new_line.valleys_ids.size() > 1)
                 this->initial_lines.push_back(new_line);
         }
@@ -163,6 +151,7 @@ LineSegmentation::get_initial_lines() {
 }
 
 // ToDo @Samir55 REFACTOR
+// ToDo @Samir55 change into 3 functions one draws the points of the line (show_lines) , the other one generates the points and the last one repair them (repair_lines).
 void
 LineSegmentation::draw_image_with_lines(bool save_img) {
     cv::Mat img_clone = this->color_img.clone();
@@ -231,7 +220,8 @@ LineSegmentation::draw_image_with_lines(bool save_img) {
 }
 
 void
-LineSegmentation::draw_final_lines() {
+LineSegmentation::show_lines() {
+    // ToDo @Samir55: Draw here the vertical lines.
     cv::Mat img_clone = this->color_img.clone();
     for (auto line : initial_lines) {
         for (auto point : line.points) {
@@ -241,31 +231,28 @@ LineSegmentation::draw_final_lines() {
     cv::imwrite("Final_Lines.jpg", img_clone); // For debugging.
 }
 
-// Todo @TheAbzo implement the commented part.
 void
-LineSegmentation::get_line_regions() {
+LineSegmentation::get_regions() {
     for (auto &line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1 || line.points.size() <= 1 || line.index == initial_lines.size() - 1) continue;
 
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
-
-        // Fill region
+        // Fill region.
         for (int c = 0; c < binary_img.cols; c++) {
             for (int i = line.points[c].x; i < initial_lines[line.index + 1].points[c].x; i++) {
                 new_region.at<uchar>(i - initial_lines[line.index + 1].start_row_position,
                                      c) = this->binary_img.at<uchar>(i, c);
             }
         }
-
         cv::imwrite(string("test") + to_string(line.index) + ".jpg",
                     new_region); // ToDo @Samir: Remove as it's for debugging.
 
-        this->line_regions.push_back(Region(new_region, cv::Mat(), cv::Mat()));
+        this->line_regions.push_back(Region(new_region));
     }
 }
 
 void
-LineSegmentation::repair_initial_lines() {
+LineSegmentation::repair_lines() {
     // Loop over the regions.
     for (auto &line : initial_lines) {
         // ToDo @Samir55 Fix this.
@@ -311,7 +298,7 @@ LineSegmentation::repair_initial_lines() {
                     for (int k = point.y; k < point.y + contour.width; k++) {
                         line.points[k].x = new_row;
                     }
-                    i += contour.width - 1;
+                    i += (contour.width - 1);
                 }
             }
         }
@@ -325,10 +312,18 @@ LineSegmentation::get_lines() {
     this->generate_chunks();
     this->get_initial_lines();
     this->draw_image_with_lines();
-    this->get_line_regions();
-    this->repair_initial_lines();
-    this->draw_final_lines();
+    this->get_regions();
+    this->repair_lines();
+    this->show_lines();
     return vector<cv::Mat>();
+}
+
+Chunk::Chunk(int o, int c, int w, cv::Mat i) : valleys(vector<Valley *>()), peaks(vector<Peak>()) {
+    this->order = o;
+    this->start_col = c;
+    this->width = w;
+    this->img = i.clone();
+    this->histogram.resize(this->img.rows);
 }
 
 int
@@ -336,9 +331,6 @@ Chunk::find_peaks_valleys() {
     // Get the smoothed profile by applying a median filter of size 5.
     cv::Mat img_clone;
     cv::medianBlur(this->img, img_clone, 5);
-
-    // Assign the size of the hitogram // ToDo @Samir55 later add it to the constructor.
-    this->histogram.resize(img_clone.rows);
 
     int black_count = 0, avg_height = 0, lines_count = 0, current_height = 0;
     for (int i = 0; i < img_clone.rows; ++i) {
