@@ -277,8 +277,8 @@ LineSegmentation::repair_initial_lines() {
             int x = line.points[i].x, y = line.points[i].y; // TODO @Samir55 FIX.
 
             for (auto contour : this->contours) {
-                if (y  >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
-                    cout << "HIT Contour at " << point.x  << " , " << point.y  << endl;
+                if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
+                    cout << "HIT Contour at " << point.x << " , " << point.y << endl;
                     // Get the regions.
                     int region_above = line.index, region_below = line.index + 1;
 
@@ -296,19 +296,20 @@ LineSegmentation::repair_initial_lines() {
                                                                           this->line_regions[region_above].covariance);
                             prob_below *= Utilities::biVarGaussianDensity(point, this->line_regions[region_below].mean,
                                                                           this->line_regions[region_below].covariance);
-                            cout << "Probability above is " << prob_above << " Probability below is " << prob_below << endl;
+                            cout << "Probability above is " << prob_above << " Probability below is " << prob_below
+                                 << endl;
                         }
                     }
                     // Assign to the highest probability.
                     cout << "Probability above is " << prob_above << " Probability below is " << prob_below << endl;
                     int new_row;
                     if (prob_above - 0.00000001 > prob_below) {
-                        new_row = contour.br().x;
+                        new_row = contour.br().y;
                     } else {
-                        new_row = contour.tl().x;
+                        new_row = contour.tl().y;
                     }
                     for (int k = point.y; k < point.y + contour.width; k++) {
-                        point.y = new_row;
+                        line.points[k].x = new_row;
                     }
                     i += contour.width - 1;
                 }

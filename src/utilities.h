@@ -118,29 +118,30 @@ struct Region {
     ///
     void
     calculate_covariance() {
-        covariance = Mat::zeros(2, 2, CV_32F);
+        Mat covariance = Mat::zeros(2, 2, CV_32F);
         int n = 0;
+        float sumXSquared = 0, sumYSquared = 0, sumXY = 0;
 
         for (int i = 0; i < region.rows; i++) {
             for (int j = 0; j < region.cols; j++) {
                 // if white pixel continue.
-                if (region.at<uchar>(i, j) == 255) continue;
+                if ((int) region.at<uchar>(i, j) == 255) continue;
 
-                Mat point = Mat::zeros(2, 1, CV_32F);
-                point.at<float>(0, 0) = i - mean[0];
-                point.at<float>(1, 0) = j - mean[1];
-
-                Mat pointTrans;
-                transpose(point, pointTrans);
-
-                covariance = ((n - 2.0) / (n - 1)) * covariance + (1.0 / (n - 1)) * (point * pointTrans);
-
+                float newI = i - mean[0];
+                float newJ = j - mean[1];
+                sumXSquared += newI * newI;
+                sumXY += newI * newJ;
+                sumYSquared += newJ * newJ;
                 n++;
-                if (n == 1) n++;
             }
         }
-    }
+        covariance.at<float>(0, 0) = sumXSquared / n;
+        covariance.at<float>(0, 1) = sumXY / n;
+        covariance.at<float>(1, 0) = sumXY / n;
+        covariance.at<float>(1, 1) = sumYSquared / n;
 
+        this->covariance = covariance.clone();
+    }
 };
 
 struct Utilities {
@@ -154,10 +155,10 @@ struct Utilities {
         transpose(point, pointTrans);
 
         Mat ret = ((point * coVariance.inv() * pointTrans));
-        ret *= sqrt(determinant(coVariance) * 2 * M_PI);
+        ret *= sqrt(determinant(coVariance * 2 * M_PI));
 
-        return ret.at<float>(0,0);
+        return ret.at<float>(0, 0);
     }
 };
 
-#endif //IMAGE2CHAR_UTILITIES_H_H
+#endif //IMAGE2CHAR_UTILITIES_H_H 3.11*10^11
