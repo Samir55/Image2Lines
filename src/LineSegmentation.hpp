@@ -35,10 +35,13 @@ private:
 /// Line Segmentation class.
 class LineSegmentation {
 public:
-    LineSegmentation(string path_of_image);
+    LineSegmentation(string path_of_image){
+            this->color_img = imread(path_of_image, CV_LOAD_IMAGE_COLOR);
+            this->grey_img = imread(path_of_image, CV_LOAD_IMAGE_GRAYSCALE);
+    }
 
     /// Generate the lines found in the saved image/
-    /// \return vector<cv::Mat> a vector contining each line as a 2D mat.
+    /// \return vector<cv::Mat> a vector containing each line as a 2D mat.
     vector<cv::Mat>
     get_lines();
 
@@ -57,6 +60,8 @@ private:
     ///< The regions of all found initial lines in the image.
     vector<Rect> contours;
     /// The handwritten components found in the binary image.
+    int avg_line_height;
+    ///< The average height of lines in the image.
 
     /// Apply OTSU threshold and Binarization to the grey image.
     void
@@ -90,8 +95,9 @@ private:
     repair_lines();
 
     /// Draw the lines on the original color image for debugging.
+    /// \param path string the path of the output image.
     void
-    show_lines();
+    show_lines(string path);
 
     /// Connect the nearest valleys found in image chunks to form an initial line in a recursive manner.
     /// This function is called by find_initial_lines.
