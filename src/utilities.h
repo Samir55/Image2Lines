@@ -33,7 +33,7 @@ struct Line {
     vector<Point> points;
     ///< The points representing the line.
 
-    Line (int idx, int initial_valley_id) : start_row_position(-1), height(0), points(vector<Point>()) {
+    Line(int idx, int initial_valley_id) : start_row_position(-1), height(0), points(vector<Point>()) {
         this->index = idx;
         valleys_ids.push_back(initial_valley_id);
     }
@@ -95,11 +95,13 @@ struct Valley {
 
 struct Region {
     cv::Mat region;
+    vector<int> row_offset;
     cv::Mat covariance;
     cv::Vec2f mean;
 
-    Region(cv::Mat a) {
+    Region(cv::Mat a, vector<int> ro) {
         region = a.clone();
+        row_offset = ro;
         calculate_mean();
         calculate_covariance();
     }
@@ -115,9 +117,9 @@ struct Region {
                 if (region.at<uchar>(i, j) == 255) continue;
                 if (n == 0) {
                     n = n + 1;
-                    mean = Vec2f(i, j);
+                    mean = Vec2f(i+row_offset[j], j);
                 } else {
-                    mean = (n - 1.0) / n * mean + 1.0 / n * Vec2f(i, j);
+                    mean = (n - 1.0) / n * mean + 1.0 / n * Vec2f(i+row_offset[j], j);
                     n = n + 1.0;
                 }
             }
@@ -137,7 +139,7 @@ struct Region {
                 // if white pixel continue.
                 if ((int) region.at<uchar>(i, j) == 255) continue;
 
-                float newI = i - mean[0];
+                float newI = i+row_offset[j] - mean[0];
                 float newJ = j - mean[1];
                 sumXSquared += newI * newI;
                 sumXY += newI * newJ;
@@ -152,20 +154,17 @@ struct Region {
 
         this->covariance = covariance.clone();
     }
-};
-
-struct Utilities {
 
     /// Calculate bi-variate Gaussian density.
-    static float biVarGaussianDensity(Mat point, Vec2f mean, Mat coVariance) {
-        point.at<float>(0, 0) -= mean[0];
-        point.at<float>(0, 1) -= mean[1];
+    float biVarGaussianDensity(Mat point) {
+        point.at<float>(0, 0) -= this->mean[0];
+        point.at<float>(0, 1) -= this->mean[1];
 
         Mat pointTrans;
         transpose(point, pointTrans);
 
-        Mat ret = ((point * coVariance.inv() * pointTrans));
-        ret *= sqrt(determinant(coVariance * 2 * M_PI));
+        Mat ret = ((point * this->covariance.inv() * pointTrans));
+        ret *= sqrt(determinant(this->covariance * 2 * M_PI));
 
         return ret.at<float>(0, 0);
     }

@@ -2,12 +2,13 @@
 
 #define CHUNKS_NUMBER 20
 #define CHUNKS_TO_BE_PROCESSED 5
-#define TEST_LINE_COLOR cv::Vec3b(255, 0, 255)
+#define TEST_LINE_COLOR cv::Vec3b(255, 0, 255) // Magenta color.
 
 /// Image Chunk.
-class Chunk
-{
-public:
+class Chunk {
+    friend class LineSegmentation;
+
+private:
     int order;
     /// The index of the chunk.
     int start_col;
@@ -15,7 +16,7 @@ public:
     int width;
     ///< The width of the chunk.
     cv::Mat img;
-    ///< //grey level image
+    ///< The grey level image
     vector<int> histogram;
     ///< The values of the y histogram projection profile.
     vector<Peak> peaks;
@@ -31,9 +32,8 @@ public:
     find_peaks_valleys();
 };
 
-// Line Segmentation class.
-class LineSegmentation
-{
+/// Line Segmentation class.
+class LineSegmentation {
 public:
     LineSegmentation(string path_of_image);
 
@@ -55,9 +55,10 @@ private:
     ///< The initial lines.
     vector<Region> line_regions;
     ///< The regions of all found initial lines in the image.
-    vector<Rect> contours; /// The handwritten components found in the binary image.
+    vector<Rect> contours;
+    /// The handwritten components found in the binary image.
 
-    /// Apply OTSU thresholding and Binarization to the grey image.
+    /// Apply OTSU threshold and Binarization to the grey image.
     void
     pre_process_image();
 
@@ -75,13 +76,13 @@ private:
 
     /// ToDo @Samir55
     void
-    draw_image_with_lines(bool save_img = true);
+    generate_initial_points();
 
     /// Get the lines regions ( A 2D mat describing each line in the image).
     void
     get_regions();
 
-    /// Use Statistical approach to repair the initial lines.
+    /// Use statistical approach to repair the initial lines.
     // When hitting get the hit component and get the above and the below line regions.
     // Apply to each pixel in each line region P(p |μ,Σ) = |2πΣ|1 (p − μ)Σ−1(p − μ)T to get 2 probabilities.
     // Assign the region to the correct line region and update the points of the separator line.
