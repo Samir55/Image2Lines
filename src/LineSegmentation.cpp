@@ -2,6 +2,11 @@
 
 map<valley_id, Valley *> all_valleys_ids; ///< A Map from valley id to it's pointer.
 
+LineSegmentation::LineSegmentation(string path_of_image) {
+    this->color_img = imread(path_of_image, CV_LOAD_IMAGE_COLOR);
+    this->grey_img = imread(path_of_image, CV_LOAD_IMAGE_GRAYSCALE);
+}
+
 void
 LineSegmentation::pre_process_image() {
     // More filters are about to be applied.
@@ -125,12 +130,10 @@ LineSegmentation::get_initial_lines() {
 
     // Start form the CHUNKS_TO_BE_PROCESSED chunk.
     for (int i = CHUNKS_TO_BE_PROCESSED - 1; i >= 0; i--) {
-        // Check if the chunk is empty.
         if (chunks[i].valleys.empty()) continue;
 
         // Connect each valley with the nearest ones in the left chunks.
         for (auto &valley : chunks[i].valleys) {
-            // Ignore the already connected valleys.
             if (valley->used) continue;
 
             // Start a new line having the current valley and connect it with others in the left.
@@ -216,6 +219,7 @@ LineSegmentation::show_lines(string path) {
 
 void
 LineSegmentation::get_regions() {
+    this->line_regions = vector<Region>();
     for (auto line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
 
@@ -298,15 +302,18 @@ Chunk::Chunk(int o, int c, int w, cv::Mat i) : valleys(vector<Valley *>()), peak
     this->width = w;
     this->img = i.clone();
     this->histogram.resize((unsigned long) this->img.rows);
+    this->avg_height = 0;
+    this->lines_count = 0;
 }
 
-int
-Chunk::find_peaks_valleys() {
+void
+Chunk::calculate_histogram() {
     // Get the smoothed profile by applying a median filter of size 5.
     cv::Mat img_clone;
     cv::medianBlur(this->img, img_clone, 5);
+    this->img = img_clone;
 
-    int black_count = 0, avg_height = 0, lines_count = 0, current_height = 0;
+    int black_count = 0, current_height = 0;
     for (int i = 0; i < img_clone.rows; ++i) {
         black_count = 0;
         for (int j = 0; j < img_clone.cols; ++j) {
@@ -328,67 +335,65 @@ Chunk::find_peaks_valleys() {
     // Calculate the average height.
     if (lines_count) avg_height /= lines_count;
     avg_height = int(avg_height + (avg_height / 2.0));
+}
+
+int
+Chunk::find_peaks_valleys() {
+    this->calculate_histogram();
 
     // Detect Peaks.
-    vector<Peak> initial_peaks;
     for (int i = 1; i < this->histogram.size() - 1; i++) {
         int left_val = this->histogram[i - 1], right_val = this->histogram[i], centre_val = this->histogram[i + 1];
         if (centre_val > left_val && centre_val > right_val) { // Peak detected.
-            if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
-                centre_val >= initial_peaks.back().value) { // Try to get the largest peak in same region.
-                initial_peaks.back().position = i;
-                initial_peaks.back().value = centre_val;
-            } else if (initial_peaks.size() > 0 && i - initial_peaks.back().position <= avg_height / 2 &&
-                       centre_val < initial_peaks.back().value) {}
+            if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
+                centre_val >= peaks.back().value) { // Try to get the largest peak in same region.
+                peaks.back().position = i;
+                peaks.back().value = centre_val;
+            } else if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
+                       centre_val < peaks.back().value) {}
             else {
-                initial_peaks.push_back(Peak(i, centre_val));
+                peaks.push_back(Peak(i, centre_val));
             }
         }
     }
 
-    // Sort peaks by max value.
-    sort(initial_peaks.begin(), initial_peaks.end());
-
-    // Resize
-    initial_peaks.resize(
-            lines_count + 1 <= initial_peaks.size() ? (unsigned long) lines_count + 1 : initial_peaks.size());
+    // Sort peaks by max value and remove the outliers (the ones with less foreground pixels).
+    sort(peaks.begin(), peaks.end());
+    peaks.resize(
+            lines_count + 1 <= peaks.size() ? (unsigned long) lines_count + 1 : peaks.size());
 
     // Sort peaks by least position.
-    sort(initial_peaks.begin(), initial_peaks.end(), Peak::comp);
-    this->peaks = initial_peaks;
+    sort(peaks.begin(), peaks.end(), Peak::comp);
 
     // Search for valleys between 2 peaks.
-    vector<Valley *> initial_valleys;
-    for (int i = 1; i <= initial_peaks.size(); i++) {
-        int min_position = initial_peaks[i - 1].position;
-        int min_value = initial_peaks[i - 1].value;
+    for (int i = 1; i <= peaks.size(); i++) {
+        int min_position = peaks[i - 1].position;
+        int min_value = peaks[i - 1].value;
 
-        for (int j = (initial_peaks[i - 1].position + avg_height / 3);
-             j < (i == initial_peaks.size() ? img_clone.rows : initial_peaks[i].position - avg_height / 3); j++) {
+        for (int j = (peaks[i - 1].position + avg_height / 3);
+             j < (i == peaks.size() ? this->img.rows : peaks[i].position - avg_height / 3); j++) {
             int valley_black_count = 0;
-            for (int l = 0; l < img_clone.cols; ++l) {
-                if (img_clone.at<uchar>(j, l) == 0) {
+            for (int l = 0; l < this->img.cols; ++l) {
+                if (this->img.at<uchar>(j, l) == 0) {
                     valley_black_count++;
                 }
             }
-            if (i == initial_peaks.size() && valley_black_count <= min_value) {
+            if (i == peaks.size() && valley_black_count <= min_value) {
                 min_value = valley_black_count;
                 min_position = j;
                 if (!min_value) {
-                    min_position = min(img_clone.rows - 1, min_position + avg_height);
-                    j = img_clone.rows;
+                    min_position = min(this->img.rows - 1, min_position + avg_height);
+                    j = this->img.rows;
                 }
-            } else if (valley_black_count <= min_value && j < initial_peaks[i].position - max(50, avg_height / 2)) {
+            } else if (valley_black_count <= min_value && j < peaks[i].position - max(50, avg_height / 2)) {
                 min_value = valley_black_count;
                 min_position = j;
             }
         }
         Valley *new_valley = new Valley(this->order, int(all_valleys_ids.size()), min_position, min_value);
 
-        initial_valleys.push_back(new_valley);
-        initial_valleys.back()->valley_id = int(all_valleys_ids.size());
-        all_valleys_ids[initial_valleys.back()->valley_id] = new_valley;
+        valleys.push_back(new_valley);
+        all_valleys_ids[valleys.back()->valley_id] = new_valley;
     }
-    this->valleys = initial_valleys;
     return int(ceil(avg_height));
 }

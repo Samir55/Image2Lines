@@ -8,6 +8,11 @@
 class Chunk {
     friend class LineSegmentation;
 
+    /// Valleys and peaks detection in this image chunk.
+    /// \return int the average line height in this chunk.
+    int
+    find_peaks_valleys();
+
 private:
     int order;
     /// The index of the chunk.
@@ -23,22 +28,22 @@ private:
     ///< The found peaks in this chunk.
     vector<Valley *> valleys;
     ///< The found valleys in this chunk.
+    int avg_height;
+    ///< The average line height in this chunk.
+    int lines_count;
+    ///< The estimated number of lines in this chunk.
 
     Chunk(int o, int c, int w, cv::Mat i);
 
-    /// Valleys and peaks detection in this image chunk.
-    /// \return int the average line height in this chunk.
-    int
-    find_peaks_valleys();
+    /// Calculate the chunk histogram (Y projection profile).
+    /// This function is called by find_peaks_valleys.
+    void calculate_histogram();
 };
 
 /// Line Segmentation class.
 class LineSegmentation {
 public:
-    LineSegmentation(string path_of_image){
-            this->color_img = imread(path_of_image, CV_LOAD_IMAGE_COLOR);
-            this->grey_img = imread(path_of_image, CV_LOAD_IMAGE_GRAYSCALE);
-    }
+    LineSegmentation(string path_of_image);
 
     /// Generate the lines found in the saved image/
     /// \return vector<cv::Mat> a vector containing each line as a 2D mat.
@@ -87,10 +92,7 @@ private:
     void
     get_regions();
 
-    /// Use statistical approach to repair the initial lines.
-    // When hitting get the hit component and get the above and the below line regions.
-    // Apply to each pixel in each line region P(p |μ,Σ) = |2πΣ|1 (p − μ)Σ−1(p − μ)T to get 2 probabilities.
-    // Assign the region to the correct line region and update the points of the separator line.
+    /// Use statistical approach to repair the initial lines (refer to the paper).
     void
     repair_lines();
 
