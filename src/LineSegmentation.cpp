@@ -41,7 +41,7 @@ LineSegmentation::find_contours() {
     Rect2d rectangle3;
     vector<Rect> merged_rectangles;
     bool is_repeated = false;
-    Mat drawing = Mat::zeros(img_clone.size(), CV_64F);
+    Mat drawing = this->color_img;
 
     // Checking for intersecting rectangles.
     for (int i = 0; i < bound_rect.size(); i++) {
@@ -68,6 +68,21 @@ LineSegmentation::find_contours() {
         if (!is_repeated)
             merged_rectangles.push_back(bound_rect[i]);
     }
+    for( size_t i = 0; i< merged_rectangles.size(); i++ )
+    {
+        //drawContours( drawing, contours_poly, (int)i, Scalar(255), 1, 8, vector<Vec4i>(), 0, Point() );
+        // rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), Scalar(255), 2, 8, 0 );
+        rectangle( drawing, merged_rectangles[i].tl(), merged_rectangles[i].br(), TEST_LINE_COLOR, 2, 8, 0 );
+
+    }
+    //rectangle( drawing, merged_rectangles[1].tl(), merged_rectangles[1].br(), Scalar(255), 2, 8, 0 );
+    //rectangle( drawing, merged_rectangles[0].tl(), merged_rectangles[0].br(), Scalar(255), 2, 8, 0 );
+    //  rectangle( drawing, merged_rectangles[3].tl(), merged_rectangles[0].br(), Scalar(255), 2, 8, 0 );
+
+//    Rect2d testing(0,0, 100,100);//assuming it the left corner point
+//    rectangle( drawing, testing.tl(), testing.br(), Scalar(255), 2, 8, 0 );
+
+    cv::imwrite("contours.jpg", drawing);
     this->contours = merged_rectangles;
 }
 
@@ -157,7 +172,6 @@ LineSegmentation::generate_initial_points() {
         // Sort the valleys according to their chunk number.
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
 
-        cout << "First chunk is " << all_valleys_ids[line.valleys_ids.front()]->chunk_order << " at col " << all_valleys_ids[line.valleys_ids.front()]->position <<  endl;
         // Add line points in the first chunks having no valleys.
         if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
             previous_row = all_valleys_ids[line.valleys_ids.front()]->position;
@@ -166,7 +180,6 @@ LineSegmentation::generate_initial_points() {
                 if (c++ == j)
                     line.points.push_back(Point(previous_row, j));
             }
-            cout << "First point is at " << line.points.front() << endl;
         }
 
         // Add line points between the valleys.
@@ -195,7 +208,6 @@ LineSegmentation::generate_initial_points() {
                     line.points.push_back(Point(chunk_row, j));
             }
         }
-//        cout << line.index << " " << max_row_position << " " << last_min_position << endl;
         line.start_row_position = last_min_position;
         line.height = max_row_position - last_min_position;
         last_min_position = min_row_position;
@@ -212,7 +224,7 @@ LineSegmentation::show_lines() {
             // Check and draw vertical lines if found.
             if (last_row != -1 && point.x != last_row) {
                 for (int i = min(last_row, point.x); i < max(last_row, point.x); i++) {
-//                    img_clone.at<Vec3b>(i, point.y) = TEST_LINE_COLOR;
+                    img_clone.at<Vec3b>(i, point.y) = TEST_LINE_COLOR;
                 }
             }
             last_row = point.x;
@@ -234,9 +246,7 @@ LineSegmentation::get_regions() {
             for (int i = start; i < line.points[c].x; i++) {
                 offset = (!line.index ? 0 : initial_lines[line.index - 1].points[c].x);
                 row_offset.push_back(offset);
-                int t = i - offset;
-                if (t > line.height) perror("VOILATING");
-                new_region.at<uchar>(t, c) = this->binary_img.at<uchar>(i, c);
+                new_region.at<uchar>(i - offset, c) = this->binary_img.at<uchar>(i, c);
             }
         }
         cv::imwrite(string("Region") + to_string(line.index) + ".jpg",
@@ -250,9 +260,6 @@ void
 LineSegmentation::repair_lines() {
     // Loop over the regions.
     for (auto &line : initial_lines) {
-        // ToDo @Samir55 Fix this.
-        if (line.index == this->initial_lines.size() - 1) continue;
-
         for (int i = 0; i < line.points.size(); i++) {
             Point &point = line.points[i];
             if (this->binary_img.at<uchar>(point.x, point.y) == 255) continue;
@@ -260,7 +267,7 @@ LineSegmentation::repair_lines() {
 
             for (auto contour : this->contours) {
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
-//                    cout << "HIT Contour at " << point.x << " , " << point.y << endl;
+                    cout << "HIT Contour at " << point.x << " , " << point.y << endl;
                     // Get the regions.
                     int region_above = line.index, region_below = line.index + 1;
 
@@ -274,16 +281,14 @@ LineSegmentation::repair_lines() {
                             Mat point = Mat::zeros(1, 2, CV_32F);
                             point.at<float>(0, 0) = i;
                             point.at<float>(0, 1) = j;
-//                            cout << "Region HERE at line" << line.index << " " << region_above << " " << region_below
-//                                 << endl;
-                            prob_above *= this->line_regions[region_above].biVarGaussianDensity(point);
-                            prob_below *= this->line_regions[region_below].biVarGaussianDensity(point);
+                            prob_above *= this->line_regions[region_above].bi_variate_gaussian_density(point);
+                            prob_below *= this->line_regions[region_below].bi_variate_gaussian_density(point);
 //                            cout << "Probability above is " << prob_above << " Probability below is " << prob_below
 //                                 << endl;
                         }
                     }
                     // Assign to the highest probability.
-//                    cout << "Probability above is " << prob_above << " Probability below is " << prob_below << endl;
+                    cout << "Probability above is " << prob_above << " Probability below is " << prob_below << endl;
                     int new_row;
                     if (prob_above - 0.00000001 > prob_below) {
                         new_row = contour.br().y;
@@ -308,8 +313,8 @@ LineSegmentation::get_lines() {
     this->get_initial_lines();
     this->generate_initial_points();
     this->get_regions();
-//    this->repair_lines();
-//    this->get_regions();
+    this->repair_lines();
+    this->get_regions();
     this->show_lines();
     return vector<cv::Mat>();
 }

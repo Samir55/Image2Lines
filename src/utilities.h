@@ -156,7 +156,7 @@ struct Region {
     }
 
     /// Calculate bi-variate Gaussian density.
-    float biVarGaussianDensity(Mat point) {
+    float bi_variate_gaussian_density(Mat point) {
         point.at<float>(0, 0) -= this->mean[0];
         point.at<float>(0, 1) -= this->mean[1];
 
@@ -164,9 +164,10 @@ struct Region {
         transpose(point, pointTrans);
 
         Mat ret = ((point * this->covariance.inv() * pointTrans));
-        ret *= sqrt(determinant(this->covariance * 2 * M_PI));
+        ret *= 0.000001* sqrt(determinant(this->covariance * 2 * M_PI));
+//        cout << sqrt(determinant(this->covariance * 2 * M_PI)) << endl;
 
-        return ret.at<float>(0, 0);
+        return 0.1110 * ret.at<float>(0, 0);
     }
 };
 
