@@ -397,3 +397,89 @@ Chunk::find_peaks_valleys() {
     }
     return int(ceil(avg_height));
 }
+
+Line::Line(int idx, int initial_valley_id) : start_row_position(-1), height(0), points(vector<Point>()) {
+    this->index = idx;
+    valleys_ids.push_back(initial_valley_id);
+}
+
+bool
+Peak::operator<(const Peak &p) const {
+    return value > p.value;
+}
+
+bool
+Peak::comp(const Peak &a, const Peak &b) {
+    return a.position < b.position;
+}
+
+bool
+Valley::comp(const Valley *a, const Valley *b) {
+    return a->position < b->position;
+}
+
+Region::Region(cv::Mat a, vector<int> ro) {
+    region = a.clone();
+    row_offset = ro;
+    calculate_mean();
+    calculate_covariance();
+}
+
+void
+Region::calculate_mean() {
+    mean[0] = mean[1] = 0.0f;
+    int n = 0;
+    for (int i = 0; i < region.rows; i++) {
+        for (int j = 0; j < region.cols; j++) {
+            // if white pixel continue.
+            if (region.at<uchar>(i, j) == 255) continue;
+            if (n == 0) {
+                n = n + 1;
+                mean = Vec2f(i + row_offset[j], j);
+            } else {
+                mean = (n - 1.0) / n * mean + 1.0 / n * Vec2f(i + row_offset[j], j);
+                n = n + 1.0;
+            }
+        }
+    }
+}
+
+void
+Region::calculate_covariance() {
+    Mat covariance = Mat::zeros(2, 2, CV_32F);
+    int n = 0;
+    float sumXSquared = 0, sumYSquared = 0, sumXY = 0;
+
+    for (int i = 0; i < region.rows; i++) {
+        for (int j = 0; j < region.cols; j++) {
+            // if white pixel continue.
+            if ((int) region.at<uchar>(i, j) == 255) continue;
+
+            float newI = i + row_offset[j] - mean[0];
+            float newJ = j - mean[1];
+            sumXSquared += newI * newI;
+            sumXY += newI * newJ;
+            sumYSquared += newJ * newJ;
+            n++;
+        }
+    }
+    covariance.at<float>(0, 0) = sumXSquared / n;
+    covariance.at<float>(0, 1) = sumXY / n;
+    covariance.at<float>(1, 0) = sumXY / n;
+    covariance.at<float>(1, 1) = sumYSquared / n;
+
+    this->covariance = covariance.clone();
+}
+
+float
+Region::bi_variate_gaussian_density(Mat point) {
+    point.at<float>(0, 0) -= this->mean[0];
+    point.at<float>(0, 1) -= this->mean[1];
+
+    Mat pointTrans;
+    transpose(point, pointTrans);
+
+    Mat ret = ((point * this->covariance.inv() * pointTrans));
+    ret *= 0.000001 * sqrt(determinant(this->covariance * 2 * M_PI));
+    return 0.1110 * ret.at<float>(0, 0);
+}

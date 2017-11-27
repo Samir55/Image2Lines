@@ -1,8 +1,116 @@
-#include "utilities.h"
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <cstring>
+#include <cmath>
+#include <cv.h>
+#include <math.h>
+#include <opencv/cv.hpp>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/core/core.hpp"
 
 #define CHUNKS_NUMBER 20
 #define CHUNKS_TO_BE_PROCESSED 5
 #define TEST_LINE_COLOR cv::Vec3b(255, 0, 255) // Magenta color.
+
+typedef int valley_id;
+
+using namespace cv;
+using namespace std;
+
+class LineSegmentation;
+
+/// A class representing the separator between line regions.
+struct Line {
+    friend class LineSegmentation;
+
+private:
+    int index;
+    ///< Index of the line in the vector.
+    vector<valley_id> valleys_ids;
+    ///< The ids of the valleys.
+    int start_row_position;
+    ///< The row at which the region starts.
+    int height;
+    ///< The height of the line region above this line separator.
+    vector<Point> points;
+    ///< The points representing the line.
+
+    Line(int idx, int initial_valley_id);
+};
+
+/// A class representing the peaks (local maximum points in the histogram).
+class Peak {
+public:
+    int position;
+    ///< The row position.
+    int value;
+    ///< The number of foreground pixels.
+
+    Peak() {}
+
+    Peak(int p, int v) : position(p), value(v) {}
+
+    Peak(int p, int v, int s, int e) : position(p), value(v) {}
+
+    /// Compare according to the value.
+    bool
+    operator<(const Peak &p) const;
+
+    /// Compare according to the row position
+    static bool
+    comp(const Peak &a, const Peak &b);
+};
+
+/// A class representing the valleys (local minimum points in the histogram)
+class Valley {
+public:
+    int chunk_order;
+    ///< The index of the chunk in the chunks vector.
+    int valley_id;
+    ///< The valley id.
+    int position;
+    ///< The row position.
+    bool used;
+    /// Whether it's used by a line or not.
+
+    Valley(int v_id) : valley_id(v_id), used(false) {}
+
+    Valley(int c_id, int v_id, int p, int v) : chunk_order(c_id), valley_id(v_id), position(p), used(false) {}
+
+    static bool
+    comp(const Valley *a, const Valley *b);
+};
+
+/// A class representing the line regions.
+class Region {
+    friend class LineSegmentation;
+private:
+    cv::Mat region;
+    ///< 2D matrix representing the region.
+    vector<int> row_offset;
+    ///< A vector containing the offset of each col to the original image matrix.
+    cv::Mat covariance;
+    ///< The covariance of the matrix.
+    cv::Vec2f mean;
+    ///< The mean of the matrix.
+
+    Region(cv::Mat a, vector<int> ro);
+
+    void
+    calculate_mean();
+
+    void
+    calculate_covariance();
+
+    /// Calculate bi-variate Gaussian density given a point.
+    float
+    bi_variate_gaussian_density(Mat point);
+};
+
 
 /// Image Chunk.
 class Chunk {
@@ -88,7 +196,7 @@ private:
     void
     generate_initial_points();
 
-    /// Get the lines regions ( A 2D mat describing each line in the image).
+    /// Get the lines regions (A 2D mat describing each line in the image).
     void
     get_regions();
 
