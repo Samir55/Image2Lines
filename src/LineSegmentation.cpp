@@ -263,8 +263,13 @@ LineSegmentation::repair_lines() {
                             Mat contour_point = Mat::zeros(1, 2, CV_32F);
                             contour_point.at<float>(0, 0) = i_contour;
                             contour_point.at<float>(0, 1) = j_contour;
-                            prob_above *= this->line_regions[region_above].bi_variate_gaussian_density(contour_point);
-                            prob_below *= this->line_regions[region_below].bi_variate_gaussian_density(contour_point);
+                            float prob_a = 0.0, prob_b = 0, prob_m = 0;
+                            prob_a = this->line_regions[region_above].bi_variate_gaussian_density(contour_point);
+                            prob_b = this->line_regions[region_below].bi_variate_gaussian_density(contour_point);
+                            prob_m = max(prob_a, prob_b);
+                            prob_above *= (prob_a / prob_m);
+                            prob_below *= (prob_b / prob_m);
+                            cout << "Probability now is for above: " << prob_above << " below: " << prob_below << endl;
                         }
                     }
                     // Assign to the highest probability.
@@ -438,7 +443,7 @@ Region::calculate_mean() {
                 mean = Vec2f(i + row_offset[j], j);
             } else {
                 mean = (n - 1.0) / n * mean + 1.0 / n * Vec2f(i + row_offset[j], j);
-                n = n + 1.0;
+                n = n + 1;
             }
         }
     }
@@ -448,25 +453,25 @@ void
 Region::calculate_covariance() {
     Mat covariance = Mat::zeros(2, 2, CV_32F);
     int n = 0;
-    float sumXSquared = 0, sumYSquared = 0, sumXY = 0;
+    float sum_x_squared = 0, sum_y_squared = 0, sum_x_y = 0;
 
     for (int i = 0; i < region.rows; i++) {
         for (int j = 0; j < region.cols; j++) {
             // if white pixel continue.
             if ((int) region.at<uchar>(i, j) == 255) continue;
 
-            float newI = i + row_offset[j] - mean[0];
-            float newJ = j - mean[1];
-            sumXSquared += newI * newI;
-            sumXY += newI * newJ;
-            sumYSquared += newJ * newJ;
+            float new_i = i + row_offset[j] - mean[0];
+            float new_j = j - mean[1];
+            sum_x_squared += new_i * new_i;
+            sum_x_y += new_i * new_j;
+            sum_y_squared += new_j * new_j;
             n++;
         }
     }
-    covariance.at<float>(0, 0) = sumXSquared / n;
-    covariance.at<float>(0, 1) = sumXY / n;
-    covariance.at<float>(1, 0) = sumXY / n;
-    covariance.at<float>(1, 1) = sumYSquared / n;
+    covariance.at<float>(0, 0) = sum_x_squared / n;
+    covariance.at<float>(0, 1) = sum_x_y / n;
+    covariance.at<float>(1, 0) = sum_x_y / n;
+    covariance.at<float>(1, 1) = sum_y_squared / n;
 
     this->covariance = covariance.clone();
 }
@@ -476,10 +481,10 @@ Region::bi_variate_gaussian_density(Mat point) {
     point.at<float>(0, 0) -= this->mean[0];
     point.at<float>(0, 1) -= this->mean[1];
 
-    Mat pointTrans;
-    transpose(point, pointTrans);
+    Mat point_transpose;
+    transpose(point, point_transpose);
 
-    Mat ret = ((point * this->covariance.inv() * pointTrans));
-    ret *= 0.000001 * sqrt(determinant(this->covariance * 2 * M_PI));
-    return 0.1110 * ret.at<float>(0, 0);
+    Mat ret = ((point * this->covariance.inv() * point_transpose));
+    ret *= sqrt(determinant(this->covariance * 2 * M_PI));
+    return ret.at<float>(0, 0);
 }

@@ -88,6 +88,7 @@ public:
 /// A class representing the line regions.
 class Region {
     friend class LineSegmentation;
+
 private:
     cv::Mat region;
     ///< 2D matrix representing the region.
@@ -110,7 +111,6 @@ private:
     float
     bi_variate_gaussian_density(Mat point);
 };
-
 
 /// Image Chunk.
 class Chunk {
