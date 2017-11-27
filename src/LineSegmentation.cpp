@@ -41,7 +41,7 @@ LineSegmentation::find_contours() {
     Rect2d rectangle3;
     vector<Rect> merged_rectangles;
     bool is_repeated = false;
-    Mat drawing = this->color_img;
+    Mat drawing = this->color_img.clone();
 
     // Checking for intersecting rectangles.
     for (int i = 0; i < bound_rect.size(); i++) {
@@ -51,7 +51,7 @@ LineSegmentation::find_contours() {
             rectangle3 = bound_rect[i] & bound_rect[j];
 
             // Check for intersection/union.
-            if (rectangle3.area() > 0) {
+            if ((rectangle3.area() ==  bound_rect[i].area() )||(rectangle3.area() ==  bound_rect[j].area() )) {
                 is_repeated = true;
                 rectangle3 = bound_rect[i] | bound_rect[j]; //merging
                 Rect2d merged_rectangle(rectangle3.tl().x, rectangle3.tl().y, rectangle3.width, rectangle3.height);
