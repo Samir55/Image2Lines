@@ -223,36 +223,23 @@ LineSegmentation::show_lines() {
 
 void
 LineSegmentation::get_regions() {
-//    for (auto line : this->initial_lines) {
-//        if (line.index == 0 || line.index == initial_lines.size()-1) continue;
-//        cout << "REGION " << line.index << " col 0 " << line.points.front() << " Col 0 end "
-//             << (line.points.front().x)  << " The height " << line.start_row_position +line.height << " The other region at col 0 starts at " << (initial_lines[line.index+1].points.front().x) << endl;
-////    for (auto point: initial_lines[line.index+1].points) {
-////        if (line.index == 0) continue;
-////        if (line.start_row_position + line.height <= point.x) {
-////            cout << "VIOLATING REGION AT COL " << point.y << endl;
-////            break;
-////        }
-////        if (line.index == initial_lines.size() -1) break;
-////    }
-//    }
     for (auto line : this->initial_lines) {
-        if (line.index == 0 || line.valleys_ids.size() <= 1 || line.points.size() <= 1 ||
-            line.index == initial_lines.size() - 1)
-            continue;
+        if ( line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
 
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
         vector<int> row_offset;
         // Fill region.
         for (int c = 0; c < binary_img.cols; c++) {
-            for (int i = initial_lines[line.index - 1].points[c].x; i < line.points[c].x; i++) {
-                row_offset.push_back(initial_lines[line.index - 1].points[c].x);
-                int t = i - initial_lines[line.index - 1].points[c].x;
+            int start = (!line.index ? 0 : initial_lines[line.index - 1].points[c].x), offset = 0;
+            for (int i = start; i < line.points[c].x; i++) {
+                offset = (!line.index ? 0 : initial_lines[line.index - 1].points[c].x);
+                row_offset.push_back(offset);
+                int t = i - offset;
                 if (t > line.height) perror("VOILATING");
                 new_region.at<uchar>(t, c) = this->binary_img.at<uchar>(i, c);
             }
         }
-        cv::imwrite(string("test") + to_string(line.index) + ".jpg",
+        cv::imwrite(string("Region") + to_string(line.index) + ".jpg",
                     new_region); // ToDo @Samir: Remove as it's for debugging.
 
         this->line_regions.push_back(Region(new_region, row_offset));
@@ -393,19 +380,26 @@ Chunk::find_peaks_valleys() {
 
     // Search for valleys between 2 peaks.
     vector<Valley *> initial_valleys;
-    for (int i = 1; i < initial_peaks.size(); i++) {
+    for (int i = 1; i <= initial_peaks.size(); i++) {
         int min_position = initial_peaks[i - 1].position;
         int min_value = initial_peaks[i - 1].value;
 
         for (int j = (initial_peaks[i - 1].position + avg_height / 3);
-             j < (initial_peaks[i].position - avg_height / 3); j++) {
+             j < (i == initial_peaks.size() ? img_clone.rows :initial_peaks[i].position - avg_height / 3); j++) {
             int valley_black_count = 0;
             for (int l = 0; l < img_clone.cols; ++l) {
                 if (img_clone.at<uchar>(j, l) == 0) {
                     valley_black_count++;
                 }
             }
-            if (valley_black_count <= min_value && j < initial_peaks[i].position - max(50, avg_height / 2)) {
+            if (i == initial_peaks.size() && valley_black_count <= min_value) {
+                min_value = valley_black_count;
+                min_position = j;
+                if (!min_value) {
+                    min_position = min(img_clone.rows - 1, min_position + avg_height);
+                    j = img_clone.rows;
+                }
+            } else if (valley_black_count <= min_value && j < initial_peaks[i].position - max(50, avg_height / 2)) {
                 min_value = valley_black_count;
                 min_position = j;
             }
