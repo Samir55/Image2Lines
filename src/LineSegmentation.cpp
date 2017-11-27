@@ -153,11 +153,11 @@ LineSegmentation::generate_initial_points() {
     int last_min_position = 0;
     int chunk_width = chunks.front().width;
     for (auto &line : this->initial_lines) {
-
         int c = 0, previous_row = 0, min_row_position = 0, max_row_position = 0;
         // Sort the valleys according to their chunk number.
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
 
+        cout << "First chunk is " << all_valleys_ids[line.valleys_ids.front()]->chunk_order << " at col " << all_valleys_ids[line.valleys_ids.front()]->position <<  endl;
         // Add line points in the first chunks having no valleys.
         if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
             previous_row = all_valleys_ids[line.valleys_ids.front()]->position;
@@ -166,6 +166,7 @@ LineSegmentation::generate_initial_points() {
                 if (c++ == j)
                     line.points.push_back(Point(previous_row, j));
             }
+            cout << "First point is at " << line.points.front() << endl;
         }
 
         // Add line points between the valleys.
@@ -194,7 +195,7 @@ LineSegmentation::generate_initial_points() {
                     line.points.push_back(Point(chunk_row, j));
             }
         }
-        cout << line.index << " " << max_row_position << " " << last_min_position << endl;
+//        cout << line.index << " " << max_row_position << " " << last_min_position << endl;
         line.start_row_position = last_min_position;
         line.height = max_row_position - last_min_position;
         last_min_position = min_row_position;
@@ -222,19 +223,32 @@ LineSegmentation::show_lines() {
 
 void
 LineSegmentation::get_regions() {
+//    for (auto line : this->initial_lines) {
+//        if (line.index == 0 || line.index == initial_lines.size()-1) continue;
+//        cout << "REGION " << line.index << " col 0 " << line.points.front() << " Col 0 end "
+//             << (line.points.front().x)  << " The height " << line.start_row_position +line.height << " The other region at col 0 starts at " << (initial_lines[line.index+1].points.front().x) << endl;
+////    for (auto point: initial_lines[line.index+1].points) {
+////        if (line.index == 0) continue;
+////        if (line.start_row_position + line.height <= point.x) {
+////            cout << "VIOLATING REGION AT COL " << point.y << endl;
+////            break;
+////        }
+////        if (line.index == initial_lines.size() -1) break;
+////    }
+//    }
     for (auto line : this->initial_lines) {
-        if (line.valleys_ids.size() <= 1 || line.points.size() <= 1 ||
+        if (line.index == 0 || line.valleys_ids.size() <= 1 || line.points.size() <= 1 ||
             line.index == initial_lines.size() - 1)
             continue;
 
-        cv::Mat new_region = Mat::ones(line.height + 1, this->binary_img.cols, CV_8U) * 255;
+        cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
         vector<int> row_offset;
         // Fill region.
         for (int c = 0; c < binary_img.cols; c++) {
-            for (int i = line.points[c].x; i < initial_lines[line.index + 1].points[c].x; i++) {
-                row_offset.push_back(line.points[c].x);
-                int t = i - line.points[c].x;
-                if ( t <= line.height)
+            for (int i = initial_lines[line.index - 1].points[c].x; i < line.points[c].x; i++) {
+                row_offset.push_back(initial_lines[line.index - 1].points[c].x);
+                int t = i - initial_lines[line.index - 1].points[c].x;
+                if (t > line.height) perror("VOILATING");
                 new_region.at<uchar>(t, c) = this->binary_img.at<uchar>(i, c);
             }
         }
@@ -307,8 +321,8 @@ LineSegmentation::get_lines() {
     this->get_initial_lines();
     this->generate_initial_points();
     this->get_regions();
-    this->repair_lines();
-    this->get_regions();
+//    this->repair_lines();
+//    this->get_regions();
     this->show_lines();
     return vector<cv::Mat>();
 }
