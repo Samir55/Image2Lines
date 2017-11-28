@@ -68,6 +68,10 @@ LineSegmentation::find_contours() {
         if (!is_repeated)
             merged_rectangles.push_back(bound_rect[i]);
     }
+    // ToDo @Samir55 Remove.
+    for( size_t i = 0; i< merged_rectangles.size(); i++ )
+        rectangle( drawing, merged_rectangles[i].tl(), merged_rectangles[i].br(), TEST_LINE_COLOR, 2, 8, 0 );
+    cv::imwrite("contours.jpg", drawing);
     this->contours = merged_rectangles;
 }
 
@@ -201,8 +205,8 @@ LineSegmentation::generate_initial_points() {
 void
 LineSegmentation::show_lines(string path) {
     cv::Mat img_clone = this->color_img.clone();
-    int last_row = -1;
     for (auto line : initial_lines) {
+        int last_row = -1;
         for (auto point : line.points) {
             img_clone.at<Vec3b>(point.x, point.y) = TEST_LINE_COLOR;
             // Check and draw vertical lines if found.
@@ -249,10 +253,11 @@ LineSegmentation::repair_lines() {
             int x = line.points[i].x, y = line.points[i].y;
             for (auto contour : this->contours) {
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
+                    cout << "Component hit at " << point << endl;
                     int region_above = line.index, region_below = line.index + 1;
 
                     // If contour is longer than the average height ignore.
-                    if (contour.br().y - contour.tl().y > this->avg_line_height) continue;
+//                    if (contour.br().y - contour.tl().y > this->avg_line_height) continue;
 
                     // Calculate probabilities.
                     double prob_above = 1.0, prob_below = 1.0;
@@ -269,9 +274,9 @@ LineSegmentation::repair_lines() {
                             prob_m = max(prob_a, prob_b);
                             prob_above *= (prob_a / prob_m);
                             prob_below *= (prob_b / prob_m);
-                            cout << "Probability now is for above: " << prob_above << " below: " << prob_below << endl;
                         }
                     }
+                    cout << "Probability now is for above: " << prob_above << " below: " << prob_below << endl;
                     // Assign to the highest probability.
                     int new_row;
                     if (prob_above - 0.00000001 > prob_below) new_row = contour.br().y;
@@ -296,7 +301,7 @@ LineSegmentation::get_lines() {
     this->get_regions();
     this->show_lines("Initial_Lines.jpg");
     this->repair_lines();
-    this->get_regions();
+//    this->get_regions();
     this->show_lines("Final_Lines.jpg");
     return vector<cv::Mat>();
 }
@@ -387,7 +392,7 @@ Chunk::find_peaks_valleys() {
                 min_value = valley_black_count;
                 min_position = j;
                 if (!min_value) {
-                    min_position = min(this->img.rows - 1, min_position + avg_height);
+                    min_position = min(this->img.rows - 10, min_position + avg_height);
                     j = this->img.rows;
                 }
             } else if (valley_black_count <= min_value && j < peaks[i].position - max(50, avg_height / 2)) {
