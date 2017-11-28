@@ -257,25 +257,30 @@ LineSegmentation::repair_lines() {
                     int region_above = line.index, region_below = line.index + 1;
 
                     // If contour is longer than the average height ignore.
-//                    if (contour.br().y - contour.tl().y > this->avg_line_height) continue;
+                    if (contour.br().y - contour.tl().y > this->avg_line_height * 1.5) continue;
 
                     // Calculate probabilities.
                     double prob_above = 1.0, prob_below = 1.0;
+                    int n = 0;
                     for (int i_contour = contour.tl().x; i_contour < contour.tl().x + contour.width; i_contour++) {
                         for (int j_contour = contour.tl().y; j_contour < contour.tl().y + contour.height; j_contour++) {
                             if (binary_img.at<uchar>(j_contour, i_contour) == 255) continue;
-
+                            n++;
                             Mat contour_point = Mat::zeros(1, 2, CV_32F);
                             contour_point.at<float>(0, 0) = i_contour;
                             contour_point.at<float>(0, 1) = j_contour;
-                            float prob_a = 0.0, prob_b = 0, prob_m = 0;
+                            float prob_a, prob_b, prob_m;
                             prob_a = this->line_regions[region_above].bi_variate_gaussian_density(contour_point);
                             prob_b = this->line_regions[region_below].bi_variate_gaussian_density(contour_point);
-                            prob_m = max(prob_a, prob_b);
+                            prob_m = (prob_a + prob_b);
+//                            prob_m = 1;
                             prob_above *= (prob_a / prob_m);
                             prob_below *= (prob_b / prob_m);
+                            if (max(prob_a, prob_b) - min(prob_a, prob_b) > 1e8 && n > 30) i_contour = contour.tl().x + contour.width;
                         }
                     }
+//                    cout << "The number of black pixels is " << n << endl;
+                    n = 0;
                     cout << "Probability now is for above: " << prob_above << " below: " << prob_below << endl;
                     // Assign to the highest probability.
                     int new_row;
