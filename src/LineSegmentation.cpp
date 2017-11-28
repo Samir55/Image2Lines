@@ -69,8 +69,8 @@ LineSegmentation::find_contours() {
             merged_rectangles.push_back(bound_rect[i]);
     }
     // ToDo @Samir55 Remove.
-    for( size_t i = 0; i< merged_rectangles.size(); i++ )
-        rectangle( drawing, merged_rectangles[i].tl(), merged_rectangles[i].br(), TEST_LINE_COLOR, 2, 8, 0 );
+    for (size_t i = 0; i < merged_rectangles.size(); i++)
+        rectangle(drawing, merged_rectangles[i].tl(), merged_rectangles[i].br(), TEST_LINE_COLOR, 2, 8, 0);
     cv::imwrite("contours.jpg", drawing);
     this->contours = merged_rectangles;
 }
@@ -197,6 +197,7 @@ LineSegmentation::generate_initial_points() {
             }
         }
         line.start_row_position = last_min_position;
+        line.end_row_position = max_row_position;
         line.height = max_row_position - last_min_position;
         last_min_position = min_row_position;
     }
@@ -222,11 +223,11 @@ LineSegmentation::show_lines(string path) {
 }
 
 void
-LineSegmentation::get_regions() {
+LineSegmentation::update_regions() {
     this->line_regions = vector<Region>();
     for (auto line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
-
+        cout << "Line " << line.index << " ends at " << line.end_row_position << endl;
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
         vector<int> row_offset;
         // Fill region.
@@ -269,8 +270,10 @@ LineSegmentation::repair_lines() {
                             Mat contour_point = Mat::zeros(1, 2, CV_32F);
                             contour_point.at<float>(0, 0) = i_contour;
                             contour_point.at<float>(0, 1) = j_contour;
-                            prob_above *= (10e-15 * 0.2 * (this->line_regions[region_above].bi_variate_gaussian_density(contour_point.clone())) + 0.8);
-                            prob_below *= (10e-15 * 0.2 * (this->line_regions[region_below].bi_variate_gaussian_density(contour_point.clone())) + 0.8);
+                            prob_above *= (10e-15 * 0.2 * (this->line_regions[region_above].bi_variate_gaussian_density(
+                                    contour_point.clone())) + 0.8);
+                            prob_below *= (10e-15 * 0.2 * (this->line_regions[region_below].bi_variate_gaussian_density(
+                                    contour_point.clone())) + 0.8);
                             if (prob_below < 10e-4 || prob_above < 10e-4) {
                                 prob_below *= 10e5;
                                 prob_above *= 10e5;
@@ -278,11 +281,17 @@ LineSegmentation::repair_lines() {
                         }
                     }
                     cout << "Probability above: " << prob_above << " below: " << prob_below << endl;
-                    n = 0;
                     // Assign to the highest probability.
                     int new_row;
-                    if (prob_above - 0.00000001 < prob_below) new_row = contour.tl().y;
-                    else new_row = contour.br().y;
+                    if (prob_above - 0.00000001 < prob_below) {
+                        line.start_row_position = min(new_row, line.start_row_position);
+                        line.height = line.end_row_position - line.start_row_position;
+                        new_row = contour.tl().y;
+                    } else {
+                        line.end_row_position = max(new_row, line.end_row_position);
+                        line.height = line.end_row_position - line.start_row_position;
+                        new_row = contour.br().y;
+                    }
                     for (int k = point.y; k < point.y + contour.width; k++) {
                         line.points[k].x = new_row;
                     }
@@ -300,12 +309,21 @@ LineSegmentation::get_lines() {
     this->generate_chunks();
     this->get_initial_lines();
     this->generate_initial_points();
-    this->get_regions();
+    this->update_regions();
     this->show_lines("Initial_Lines.jpg");
     this->repair_lines();
-//    this->get_regions();
+    this->update_regions();
     this->show_lines("Final_Lines.jpg");
-    return vector<cv::Mat>();
+    return this->get_regions();
+}
+
+vector<cv::Mat>
+LineSegmentation::get_regions() {
+    vector<cv::Mat> ret;
+    for (auto region : this->line_regions) {
+        ret.push_back(region.region.clone());
+    }
+    return ret;
 }
 
 Chunk::Chunk(int o, int c, int w, cv::Mat i) : valleys(vector<Valley *>()), peaks(vector<Peak>()) {
@@ -507,7 +525,7 @@ Region::bi_variate_gaussian_density(Mat point) {
     Mat m = point * this->covariance.inv() * point_transpose;
 //    cout << "POINT " << point<<endl;
 //    cout << "M" << (m.at<float>(0,0)) << endl;
-    double ret2 = (1.0 / (2 * M_PI * sqrt(determinant(this->covariance)))) * exp(-0.5 * (m.at<float>(0,0)));
+    double ret2 = (1.0 / (2 * M_PI * sqrt(determinant(this->covariance)))) * exp(-0.5 * (m.at<float>(0, 0)));
 //    cout << "RET 2 " << ret2 << endl << endl << endl << endl << endl;
     return ret.at<float>(0, 0);
 }

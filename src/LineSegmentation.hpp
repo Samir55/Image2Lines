@@ -34,6 +34,8 @@ private:
     ///< The ids of the valleys.
     int start_row_position;
     ///< The row at which the region starts.
+    int end_row_position;
+    ///< The row at which the region ends.
     int height;
     ///< The height of the line region above this line separator.
     vector<Point> points;
@@ -192,12 +194,15 @@ private:
     void
     get_initial_lines();
 
-    /// ToDo @Samir55
+    /// Generate the initial line points.
     void
     generate_initial_points();
 
-    /// Get the lines regions (A 2D mat describing each line in the image).
+    /// Update the lines regions (A 2D mat describing each line in the image).
     void
+    update_regions();
+
+    vector<cv::Mat>
     get_regions();
 
     /// Use statistical approach to repair the initial lines (refer to the paper).
