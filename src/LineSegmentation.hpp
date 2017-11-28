@@ -108,7 +108,7 @@ private:
     calculate_covariance();
 
     /// Calculate bi-variate Gaussian density given a point.
-    float
+    double
     bi_variate_gaussian_density(Mat point);
 };
 
