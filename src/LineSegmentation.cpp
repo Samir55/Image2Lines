@@ -225,9 +225,13 @@ LineSegmentation::show_lines(string path) {
 void
 LineSegmentation::update_regions() {
     this->line_regions = vector<Region>();
+
     for (auto line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
-        cout << "Line " << line.index << " ends at " << line.end_row_position << endl;
+
+        cout << "Line " << line.index << " ends at " << line.end_row_position << " height: " << line.height << endl;
+        cout << line.height << " " << this->binary_img.cols << endl;
+
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
         vector<int> row_offset;
         // Fill region.
