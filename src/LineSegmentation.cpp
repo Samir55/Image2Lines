@@ -17,6 +17,7 @@ LineSegmentation::pre_process_image() {
 
     // OTSU threshold and Binarization.
     cv::threshold(smoothed_img, binary_img, 0.0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+    imwrite("Binary_image.jpg", this->binary_img);
 }
 
 void
@@ -309,8 +310,8 @@ LineSegmentation::get_lines() {
     this->generate_chunks();
     this->get_initial_lines();
     this->generate_initial_points();
-    this->update_regions();
     this->show_lines("Initial_Lines.jpg");
+    this->update_regions();
     this->repair_lines();
     this->update_regions();
     this->show_lines("Final_Lines.jpg");
