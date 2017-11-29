@@ -2,9 +2,13 @@
 
 map<valley_id, Valley *> all_valleys_ids; ///< A Map from valley id to it's pointer.
 
+
 LineSegmentation::LineSegmentation(string path_of_image) {
     this->color_img = imread(path_of_image, CV_LOAD_IMAGE_COLOR);
     this->grey_img = imread(path_of_image, CV_LOAD_IMAGE_GRAYSCALE);
+
+    // Initialize Sieve
+    sieve();
 }
 
 void
@@ -228,10 +232,12 @@ LineSegmentation::show_lines(string path) {
 void
 LineSegmentation::update_regions() {
     this->line_regions = vector<Region>();
+
     for (auto line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
         cout << "Region line " << line.index << " :  Min row position " << line.start_row_position << " "
              << "Max row position " << line.end_row_position << "  height " << line.height << endl;
+
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
         vector<int> row_offset;
         // Fill region.
@@ -256,6 +262,7 @@ LineSegmentation::repair_lines() {
         for (int i = 0; i < line.points.size(); i++) {
             Point &point = line.points[i];
             if (this->binary_img.at<uchar>(point.x, point.y) == 255) continue;
+
             int x = line.points[i].x, y = line.points[i].y;
             for (auto contour : this->contours) {
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
@@ -265,7 +272,8 @@ LineSegmentation::repair_lines() {
                     if (contour.br().y - contour.tl().y > this->avg_line_height * 1.5) continue;
 
                     // Calculate probabilities.
-                    double prob_above = 1.0, prob_below = 1.0;
+                    vector<int> probAbovePrimes(primes.size(), 0);
+                    vector<int> probBelowPrimes(primes.size(), 0);
                     int n = 0;
                     for (int i_contour = contour.tl().x; i_contour < contour.tl().x + contour.width; i_contour++) {
                         for (int j_contour = contour.tl().y; j_contour < contour.tl().y + contour.height; j_contour++) {
@@ -274,17 +282,28 @@ LineSegmentation::repair_lines() {
                             Mat contour_point = Mat::zeros(1, 2, CV_32F);
                             contour_point.at<float>(0, 0) = i_contour;
                             contour_point.at<float>(0, 1) = j_contour;
-                            prob_above *= (10e-15 * 0.2 * (this->line_regions[region_above].bi_variate_gaussian_density(
-                                    contour_point.clone())) + 0.8);
-                            prob_below *= (10e-15 * 0.2 * (this->line_regions[region_below].bi_variate_gaussian_density(
-                                    contour_point.clone())) + 0.8);
-                            if (prob_below < 10e-4 || prob_above < 10e-4) {
-                                prob_below *= 10e5;
-                                prob_above *= 10e5;
-                            }
+
+                            int newProbAbove = (int) (this->line_regions[region_above].bi_variate_gaussian_density(
+                                    contour_point.clone()));
+                            int newProbBelow = (int) (this->line_regions[region_below].bi_variate_gaussian_density(
+                                    contour_point.clone()));
+
+                            addPrimesToVector(newProbAbove, probAbovePrimes);
+                            addPrimesToVector(newProbBelow, probBelowPrimes);
                         }
                     }
-                    // Assign to the highest probability.
+
+                    int prob_above = 0, prob_below = 0;
+                    for (int k = 0; k < probAbovePrimes.size(); ++k) {
+                        int mini = min(probAbovePrimes[k], probBelowPrimes[k]);
+                        probAbovePrimes[k] -= mini;
+                        probBelowPrimes[k] -= mini;
+
+                        prob_above += probAbovePrimes[k] * primes[k];
+                        prob_below += probBelowPrimes[k] * primes[k];
+                    }
+                    cout << "Probability above: " << prob_above << " below: " << prob_below << endl;
+
                     int new_row;
                     for (int k = contour.tl().x; k < point.y + contour.width; k++) {
                         line.points[k].x = new_row;
@@ -320,7 +339,7 @@ LineSegmentation::get_lines() {
     this->show_lines("Initial_Lines.jpg");
     this->update_regions();
     this->repair_lines();
-    this->update_regions();
+//    this->update_regions();
     this->show_lines("Final_Lines.jpg");
     return this->get_regions();
 }
@@ -529,11 +548,32 @@ Region::bi_variate_gaussian_density(Mat point) {
 //    cout << "MEAN " << mean << endl;
 
     // cout << "RET " << ret << endl;
-
-    Mat m = point * this->covariance.inv() * point_transpose;
+// Probability above: 6192 below: 3888
+//    Mat m = point * this->covariance.inv() * point_transpose;
 //    cout << "POINT " << point<<endl;
 //    cout << "M" << (m.at<float>(0,0)) << endl;
-    double ret2 = (1.0 / (2 * M_PI * sqrt(determinant(this->covariance)))) * exp(-0.5 * (m.at<float>(0, 0)));
+//    double ret2 = (1.0 / (2 * M_PI * sqrt(determinant(this->covariance)))) * exp(-0.5 * (m.at<float>(0, 0)));
 //    cout << "RET 2 " << ret2 << endl << endl << endl << endl << endl;
     return ret.at<float>(0, 0);
+}
+
+void LineSegmentation::sieve() {
+    notPrimesArr[0] = notPrimesArr[1] = 1;
+    for (int i = 2; i < 1e5; ++i) {
+        if (notPrimesArr[i]) continue;
+
+        primes.push_back(i);
+        for (int j = i * 2; j < 1e5; j += i) {
+            notPrimesArr[j] = 1;
+        }
+    }
+}
+
+void LineSegmentation::addPrimesToVector(int n, vector<int> &probPrimes) {
+    for (int i = 0; i < primes.size(); ++i) {
+        while (n % primes[i]) {
+            n /= primes[i];
+            probPrimes[i]++;
+        }
+    }
 }

@@ -156,6 +156,13 @@ private:
 
 /// Line Segmentation class.
 class LineSegmentation {
+private:
+    bool notPrimesArr[100007];
+    vector<int> primes;
+
+    void sieve();
+    void addPrimesToVector(int, vector<int> &);
+
 public:
     LineSegmentation(string path_of_image);
 
