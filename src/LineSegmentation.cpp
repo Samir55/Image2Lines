@@ -235,8 +235,8 @@ LineSegmentation::update_regions() {
 
     for (auto line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
-        cout << "Region line " << line.index << " :  Min row position " << line.start_row_position << " "
-             << "Max row position " << line.end_row_position << "  height " << line.height << endl;
+//        cout << "Region line " << line.index << " :  Min row position " << line.start_row_position << " "
+//             << "Max row position " << line.end_row_position << "  height " << line.height << endl;
 
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
         vector<int> row_offset;
@@ -302,12 +302,11 @@ LineSegmentation::repair_lines() {
                         prob_above += probAbovePrimes[k] * primes[k];
                         prob_below += probBelowPrimes[k] * primes[k];
                     }
-                    cout << "Probability above: " << prob_above << " below: " << prob_below << endl;
+                    cout << "Component hit at " << point << endl;
+                    cout << "Probability above: " << prob_above << " below: " << prob_below << endl << endl;
 
                     int new_row;
                     for (int k = contour.tl().x; k < point.y + contour.width; k++) {
-                        line.points[k].x = new_row;
-
                         if (prob_above - 0.00000001 < prob_below) {
                             if (line.index >= this->initial_lines.size() - 1) continue;
                             new_row = contour.tl().y;
@@ -321,6 +320,7 @@ LineSegmentation::repair_lines() {
                             line.end_row_position = max(new_row, line.end_row_position);
                             line.height = line.end_row_position - line.start_row_position;
                         }
+                        line.points[k].x = new_row;
                     }
                     i += (contour.width - 1);
                 }
@@ -339,7 +339,7 @@ LineSegmentation::get_lines() {
     this->show_lines("Initial_Lines.jpg");
     this->update_regions();
     this->repair_lines();
-//    this->update_regions();
+    this->update_regions();
     this->show_lines("Final_Lines.jpg");
     return this->get_regions();
 }
