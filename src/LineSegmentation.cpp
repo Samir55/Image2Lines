@@ -86,6 +86,7 @@ LineSegmentation::generate_chunks() {
                                                                                 cv::Range(0, binary_img.rows), // Rows.
                                                                                 cv::Range(start_pixel, start_pixel +
                                                                                                        chunk_width)))); // Cols.
+        imwrite("Chunk" + to_string(i_chunk) + ".jpg", this->chunks.back().img);
         start_pixel += chunk_width;
     }
 }
@@ -200,6 +201,7 @@ LineSegmentation::generate_initial_points() {
         line.start_row_position = last_min_position;
         line.end_row_position = max_row_position;
         line.height = max_row_position - last_min_position;
+//        cout << "Min row position " << min_row_position  <<" " << "Max row position " << max_row_position <<  "  height " << line.height << endl;
         last_min_position = min_row_position;
     }
 }
@@ -228,15 +230,17 @@ LineSegmentation::update_regions() {
     this->line_regions = vector<Region>();
     for (auto line : this->initial_lines) {
         if (line.valleys_ids.size() <= 1 || line.points.size() <= 1) continue;
-        cout << "Line " << line.index << " ends at " << line.end_row_position << endl;
+        cout << "Region line " << line.index << " :  Min row position " << line.start_row_position << " "
+             << "Max row position " << line.end_row_position << "  height " << line.height << endl;
         cv::Mat new_region = Mat::ones(line.height, this->binary_img.cols, CV_8U) * 255;
         vector<int> row_offset;
         // Fill region.
         for (int c = 0; c < binary_img.cols; c++) {
             int start = (!line.index ? 0 : initial_lines[line.index - 1].points[c].x);
+            int offset = start - line.start_row_position;
             for (int i = start; i < line.points[c].x; i++) {
                 row_offset.push_back(start);
-                new_region.at<uchar>(i - start, c) = this->binary_img.at<uchar>(i, c);
+                new_region.at<uchar>(i - start + offset, c) = this->binary_img.at<uchar>(i, c);
             }
         }
         cv::imwrite(string("Region") + to_string(line.index) + ".jpg",
@@ -255,7 +259,6 @@ LineSegmentation::repair_lines() {
             int x = line.points[i].x, y = line.points[i].y;
             for (auto contour : this->contours) {
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
-                    cout << "Component hit at " << point << endl;
                     int region_above = line.index, region_below = line.index + 1;
 
                     // If contour is longer than the average height ignore.
@@ -281,20 +284,24 @@ LineSegmentation::repair_lines() {
                             }
                         }
                     }
-                    cout << "Probability above: " << prob_above << " below: " << prob_below << endl;
                     // Assign to the highest probability.
                     int new_row;
-                    if (prob_above - 0.00000001 < prob_below) {
-                        line.start_row_position = min(new_row, line.start_row_position);
-                        line.height = line.end_row_position - line.start_row_position;
-                        new_row = contour.tl().y;
-                    } else {
-                        line.end_row_position = max(new_row, line.end_row_position);
-                        line.height = line.end_row_position - line.start_row_position;
-                        new_row = contour.br().y;
-                    }
-                    for (int k = point.y; k < point.y + contour.width; k++) {
+                    for (int k = contour.tl().x; k < point.y + contour.width; k++) {
                         line.points[k].x = new_row;
+
+                        if (prob_above - 0.00000001 < prob_below) {
+                            if (line.index >= this->initial_lines.size() - 1) continue;
+                            new_row = contour.tl().y;
+                            this->initial_lines[line.index + 1].start_row_position = min(new_row, this->initial_lines[
+                                    line.index + 1].start_row_position);
+                            this->initial_lines[line.index + 1].height =
+                                    this->initial_lines[line.index + 1].end_row_position -
+                                    this->initial_lines[line.index + 1].start_row_position;
+                        } else {
+                            new_row = contour.br().y;
+                            line.end_row_position = max(new_row, line.end_row_position);
+                            line.height = line.end_row_position - line.start_row_position;
+                        }
                     }
                     i += (contour.width - 1);
                 }
@@ -365,7 +372,7 @@ Chunk::calculate_histogram() {
 
     // Calculate the average height.
     if (lines_count) avg_height /= lines_count;
-    avg_height = int(avg_height + (avg_height / 2.0));
+    avg_height = max(30, int(avg_height + (avg_height / 2.0)));
 }
 
 int
@@ -416,7 +423,7 @@ Chunk::find_peaks_valleys() {
                     min_position = min(this->img.rows - 10, min_position + avg_height);
                     j = this->img.rows;
                 }
-            } else if (valley_black_count <= min_value && j < peaks[i].position - max(50, avg_height / 2)) {
+            } else if (min_value != 0 && valley_black_count <= min_value) {
                 min_value = valley_black_count;
                 min_position = j;
             }

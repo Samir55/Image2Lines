@@ -94,6 +94,10 @@ class Region {
 private:
     cv::Mat region;
     ///< 2D matrix representing the region.
+    int start_row;
+    ///<
+    int end_row;
+    ///<
     vector<int> row_offset;
     ///< A vector containing the offset of each col to the original image matrix.
     cv::Mat covariance;
