@@ -29,4 +29,5 @@ Utilities::addPrimesToVector(int n, vector<int> &probPrimes) {
             probPrimes[i]++;
         }
     }
+    if (n != 0) throw Exception();
 }

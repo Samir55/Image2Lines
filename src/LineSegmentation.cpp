@@ -13,16 +13,28 @@ LineSegmentation::LineSegmentation(string path_of_image) {
 
 vector<Mat>
 LineSegmentation::segment() {
+    // Read image and process it
     this->read_image();
     this->pre_process_image();
+
+    // Find letters contours
     this->find_contours();
+
+    // Divide image into chunks
     this->generate_chunks();
+
+    // Generate initial separator lines using valleys concept
     this->get_initial_lines();
     this->show_lines("out/Initial_Lines.jpg");
+
+    // Get initial regions
     this->generate_regions();
+
+    // Fix collisions
     this->repair_lines();
     this->generate_regions();
     this->show_lines("out/Final_Lines.jpg");
+
     return this->get_regions();
 }
 
@@ -119,7 +131,7 @@ LineSegmentation::generate_chunks() {
 
 Line *
 LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist) {
-    if (i == 0 || chunks[i]->valleys.empty()) return line;
+    if (i <= 0 || chunks[i]->valleys.empty()) return line;
 
     // Choose the closest valley in right chunk to the start valley.
     int connected_to = -1;
@@ -294,8 +306,8 @@ bool LineSegmentation::component_belongs_to_above_region(Line &line, Rect &conto
             n++;
 
             Mat contour_point = Mat::zeros(1, 2, CV_32F);
-            contour_point.at<float>(0, 0) = i_contour;
-            contour_point.at<float>(0, 1) = j_contour;
+            contour_point.at<float>(0, 0) = j_contour;
+            contour_point.at<float>(0, 1) = i_contour;
 
             int newProbAbove = (int) ((line.above != nullptr) ? (line.above->bi_variate_gaussian_density(
                     contour_point.clone())) : 0);
@@ -319,9 +331,7 @@ bool LineSegmentation::component_belongs_to_above_region(Line &line, Rect &conto
         prob_below += probBelowPrimes[k] * Utilities::primes[k];
     }
 
-    cout << "Probability above: " << prob_above << " below: " << prob_below << endl << endl;
-
-    return prob_above > prob_below;
+    return prob_above < prob_below;
 }
 
 vector<Mat>

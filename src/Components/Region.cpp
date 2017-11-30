@@ -71,7 +71,7 @@ Region::calculate_covariance() {
     Mat covariance = Mat::zeros(2, 2, CV_32F);
 
     int n = 0; // # of points
-    float sum_x_squared = 0, sum_y_squared = 0, sum_x_y = 0;
+    float sum_i_squared = 0, sum_j_squared = 0, sum_i_j = 0;
 
     for (int i = 0; i < region.rows; i++) {
         for (int j = 0; j < region.cols; j++) {
@@ -81,18 +81,18 @@ Region::calculate_covariance() {
             float new_i = i + row_offset - mean[0];
             float new_j = j - mean[1];
 
-            sum_x_squared += new_i * new_i;
-            sum_x_y += new_i * new_j;
-            sum_y_squared += new_j * new_j;
+            sum_i_squared += new_i * new_i;
+            sum_i_j += new_i * new_j;
+            sum_j_squared += new_j * new_j;
 
             n++;
         }
     }
     if (n) {
-        covariance.at<float>(0, 0) = sum_x_squared / n;
-        covariance.at<float>(0, 1) = sum_x_y / n;
-        covariance.at<float>(1, 0) = sum_x_y / n;
-        covariance.at<float>(1, 1) = sum_y_squared / n;
+        covariance.at<float>(0, 0) = sum_i_squared / n;
+        covariance.at<float>(0, 1) = sum_i_j / n;
+        covariance.at<float>(1, 0) = sum_i_j / n;
+        covariance.at<float>(1, 1) = sum_j_squared / n;
 
     }
     this->covariance = covariance.clone();
