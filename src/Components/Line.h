@@ -34,6 +34,10 @@ private:
     /// Generate the initial line points.
     void
     generate_initial_points(int chunk_width, int img_width, map<int, Valley *> map_valley);
+
+    /// Sort depending on min row position first
+    static bool
+    comp_min_row_position(const Line *a, const Line *b);
 };
 
 

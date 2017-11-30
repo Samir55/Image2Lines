@@ -11,7 +11,7 @@ void
 Utilities::sieve() {
     notPrimesArr[0] = notPrimesArr[1] = 1;
     for (int i = 2; i < 1e5; ++i) {
-        if (primes.size() > 20) break;
+        if (primes.size() > 10) break;
         if (notPrimesArr[i]) continue;
 
         primes.push_back(i);
@@ -23,7 +23,7 @@ Utilities::sieve() {
 
 void
 Utilities::addPrimesToVector(int n, vector<int> &probPrimes) {
-    for (int i = 0; i < primes.size(); ++i) {
+    for (int i = 0; i < primes.size() && n; ++i) {
         while (n % primes[i]) {
             n /= primes[i];
             probPrimes[i]++;

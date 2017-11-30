@@ -179,6 +179,9 @@ LineSegmentation::get_initial_lines() {
             }
         }
     }
+
+    // Sort the lines
+    sort(this->initial_lines.begin(), this->initial_lines.end(), Line::comp_min_row_position);
 }
 
 void
@@ -232,7 +235,6 @@ LineSegmentation::generate_regions() {
 
         this->line_regions.push_back(r);
     }
-    cout << "X";
 }
 
 

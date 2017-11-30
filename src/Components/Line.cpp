@@ -54,3 +54,8 @@ Line::generate_initial_points(int chunk_width, int img_width, map<int, Valley *>
         }
     }
 }
+
+bool
+Line::comp_min_row_position(const Line *a, const Line *b) {
+    return a->min_row_position < b->min_row_position;
+}
