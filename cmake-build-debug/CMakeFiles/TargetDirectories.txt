@@ -1,0 +1,3 @@
+/Users/ibrahimradwan/Desktop/lines/Image2Lines2/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/ibrahimradwan/Desktop/lines/Image2Lines2/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/ibrahimradwan/Desktop/lines/Image2Lines2/cmake-build-debug/CMakeFiles/Image2Lines2.dir
