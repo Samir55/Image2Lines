@@ -9,6 +9,8 @@
 /Users/ibrahimradwan/Desktop/lines/Image2Lines2/main.cpp
 iostream
 -
+src/LineSegmentation.h
+/Users/ibrahimradwan/Desktop/lines/Image2Lines2/src/LineSegmentation.h
 
 /Users/ibrahimradwan/Desktop/lines/Image2Lines2/src/Components/Chunk.cpp
 Chunk.h

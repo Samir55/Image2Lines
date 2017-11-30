@@ -29,11 +29,11 @@ private:
     ///< The grey image.
     Mat binary_img;
     ///< The preprocessed image.
-    vector<Chunk> chunks;
+    vector<Chunk*> chunks;
     ///< The image chunks.
-    vector<Line> initial_lines;
+    vector<Line*> initial_lines;
     ///< The initial lines.
-    vector<Region> line_regions;
+    vector<Region*> line_regions;
     ///< The regions of all found initial lines in the image.
     vector<Rect> contours;
     /// The handwritten components found in the binary image.
@@ -72,7 +72,7 @@ private:
     repair_lines();
 
     /// Check if the component belongs to the above region
-    bool component_belongs_to_above_region(Line*, Rect);
+    bool component_belongs_to_above_region(Line&, Rect&);
 
     /// Draw the lines on the original color image for debugging.
     /// \param path string the path of the output image.
@@ -83,9 +83,9 @@ private:
     /// This function is called by find_initial_lines.
     /// \param i integer The index of the chunk.
     /// \param current_valley Valley The current valley.
-    /// \return Line a candidate(initial line)
-    Line
-    connect_valleys(int i, Valley *current_valley, Line &line, int valleys_min_abs_dist);
+    /// \return Line (pointer) a candidate(initial line)
+    Line*
+    connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist);
 };
 
 

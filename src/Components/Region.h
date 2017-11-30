@@ -12,6 +12,8 @@ class Region {
     friend class LineSegmentation;
 
 private:
+    int region_id;
+    ///< Region id
     Mat region;
     ///< 2D matrix representing the region.
     Line *top;

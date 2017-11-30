@@ -13,32 +13,33 @@ using namespace cv;
 
 bool
 Region::update_region(Mat &binary_image, int region_id) {
+    this->region_id = region_id;
+
     int min_region_row = row_offset = (top == nullptr) ? 0 : top->min_row_position;
     int max_region_row = (bottom == nullptr) ? binary_image.rows : bottom->max_row_position;
 
-    Mat new_region = Mat::ones(max_region_row - min_region_row, binary_image.cols, CV_8U) * 255;
+    region = Mat::ones(max_region_row - min_region_row, binary_image.cols, CV_8U) * 255;
 
     // Fill region.
-    for (int c = 0; c < binary_image.cols; c++) {
-        int start = ((top == nullptr) ? 0 : top->points[c].x);
-
-        for (int i = start; i < bottom->points[c].x; i++) {
-            new_region.at<uchar>(i - min_region_row, c) = binary_image.at<uchar>(i, c);
+    if (bottom != nullptr) {
+        for (int c = 0; c < binary_image.cols; c++) {
+            int start = ((top == nullptr) ? 0 : top->points[c].x);
+            for (int i = start; i < bottom->points[c].x; i++) {
+                region.at<uchar>(i - min_region_row, c) = binary_image.at<uchar>(i, c);
+            }
         }
     }
-
     calculate_mean();
     calculate_covariance();
 
-    imwrite(string("Region") + to_string(region_id) + ".jpg",
-            new_region);
+    imwrite("out/" + string("Region") + to_string(region_id) + ".jpg",
+            region);
 
-    return countNonZero(new_region) == new_region.cols * new_region.rows;
+    return countNonZero(region) == region.cols * region.rows;
 }
 
 
 Region::Region(Line *top, Line *bottom) {
-    // Initialize region mean/covariance
     this->top = top;
     this->bottom = bottom;
 }
@@ -87,12 +88,13 @@ Region::calculate_covariance() {
             n++;
         }
     }
+    if (n) {
+        covariance.at<float>(0, 0) = sum_x_squared / n;
+        covariance.at<float>(0, 1) = sum_x_y / n;
+        covariance.at<float>(1, 0) = sum_x_y / n;
+        covariance.at<float>(1, 1) = sum_y_squared / n;
 
-    covariance.at<float>(0, 0) = sum_x_squared / n;
-    covariance.at<float>(0, 1) = sum_x_y / n;
-    covariance.at<float>(1, 0) = sum_x_y / n;
-    covariance.at<float>(1, 1) = sum_y_squared / n;
-
+    }
     this->covariance = covariance.clone();
 }
 

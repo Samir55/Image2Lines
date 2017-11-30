@@ -18,11 +18,11 @@ LineSegmentation::segment() {
     this->find_contours();
     this->generate_chunks();
     this->get_initial_lines();
-    this->show_lines("Initial_Lines.jpg");
+    this->show_lines("out/Initial_Lines.jpg");
     this->generate_regions();
     this->repair_lines();
     this->generate_regions();
-    this->show_lines("Final_Lines.jpg");
+    this->show_lines("out/Final_Lines.jpg");
     return this->get_regions();
 }
 
@@ -42,7 +42,7 @@ LineSegmentation::pre_process_image() {
 
     // OTSU threshold and Binarization.
     threshold(smoothed_img, binary_img, 0.0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-    imwrite("Binary_image.jpg", this->binary_img);
+    imwrite("out/Binary_image.jpg", this->binary_img);
 }
 
 void
@@ -97,7 +97,7 @@ LineSegmentation::find_contours() {
     // ToDo @Samir55 Remove.
     for (size_t i = 0; i < merged_rectangles.size(); i++)
         rectangle(drawing, merged_rectangles[i].tl(), merged_rectangles[i].br(), TEST_LINE_COLOR, 2, 8, 0);
-    imwrite("contours.jpg", drawing);
+    imwrite("out/contours.jpg", drawing);
     this->contours = merged_rectangles;
 }
 
@@ -107,25 +107,25 @@ LineSegmentation::generate_chunks() {
     chunk_width = width / CHUNKS_NUMBER;
 
     for (int i_chunk = 0, start_pixel = 0; i_chunk < CHUNKS_NUMBER; ++i_chunk) {
-        this->chunks.push_back(
-                Chunk(i_chunk, start_pixel, chunk_width,
-                      Mat(binary_img, Range(0, binary_img.rows), Range(start_pixel, start_pixel + chunk_width))));
+        Chunk *c = new Chunk(i_chunk, start_pixel, chunk_width,
+                             Mat(binary_img, Range(0, binary_img.rows), Range(start_pixel, start_pixel + chunk_width)));
+        this->chunks.push_back(c);
 
-        imwrite("Chunk" + to_string(i_chunk) + ".jpg", this->chunks.back().img);
+        imwrite("out/Chunk" + to_string(i_chunk) + ".jpg", this->chunks.back()->img);
 
         start_pixel += chunk_width;
     }
 }
 
-Line
-LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line, int valleys_min_abs_dist) {
-    if (i == 0 || chunks[i].valleys.empty()) return line;
+Line *
+LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist) {
+    if (i == 0 || chunks[i]->valleys.empty()) return line;
 
     // Choose the closest valley in right chunk to the start valley.
     int connected_to = -1;
     int min_distance = 100000;
-    for (int j = 0; j < this->chunks[i].valleys.size(); j++) {
-        Valley *valley = this->chunks[i].valleys[j];
+    for (int j = 0; j < this->chunks[i]->valleys.size(); j++) {
+        Valley *valley = this->chunks[i]->valleys[j];
         // Check if the valley is not connected to any other valley.
         if (valley->used) continue;
 
@@ -141,8 +141,8 @@ LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line, int
         return line;
     }
 
-    line.valleys_ids.push_back(this->chunks[i].valleys[connected_to]->valley_id);
-    Valley *v = this->chunks[i].valleys[connected_to];
+    line->valleys_ids.push_back(this->chunks[i]->valleys[connected_to]->valley_id);
+    Valley *v = this->chunks[i]->valleys[connected_to];
     v->used = true;
     return connect_valleys(i - 1, v, line, valleys_min_abs_dist);
 }
@@ -153,7 +153,7 @@ LineSegmentation::get_initial_lines() {
 
     // Get the histogram of the first CHUNKS_TO_BE_PROCESSED and get the overall average line height.
     for (int i = 0; i < CHUNKS_TO_BE_PROCESSED; i++) {
-        int avg_height = this->chunks[i].find_peaks_valleys(map_valley);
+        int avg_height = this->chunks[i]->find_peaks_valleys(map_valley);
         if (avg_height) number_of_heights++;
         valleys_min_abs_dist += avg_height;
     }
@@ -162,20 +162,20 @@ LineSegmentation::get_initial_lines() {
 
     // Start form the CHUNKS_TO_BE_PROCESSED chunk.
     for (int i = CHUNKS_TO_BE_PROCESSED - 1; i >= 0; i--) {
-        if (chunks[i].valleys.empty()) continue;
+        if ((chunks[i]->valleys).empty()) continue;
 
         // Connect each valley with the nearest ones in the left chunks.
-        for (auto &valley : chunks[i].valleys) {
+        for (auto valley : chunks[i]->valleys) {
             if (valley->used) continue;
 
             // Start a new line having the current valley and connect it with others in the left.
             valley->used = true;
 
-            Line new_line(valley->valley_id);
+            Line *new_line = new Line(valley->valley_id);
             new_line = connect_valleys(i - 1, valley, new_line, valleys_min_abs_dist);
-            if (new_line.valleys_ids.size() > 1) {
+            if (new_line->valleys_ids.size() > 1) {
+                new_line->generate_initial_points(chunk_width, color_img.cols, map_valley);
                 this->initial_lines.push_back(new_line);
-                new_line.generate_initial_points(chunk_width, color_img.cols, map_valley);
             }
         }
     }
@@ -187,7 +187,8 @@ LineSegmentation::show_lines(string path) {
 
     for (auto line : initial_lines) {
         int last_row = -1;
-        for (auto point : line.points) {
+
+        for (auto point : line->points) {
             img_clone.at<Vec3b>(point.x, point.y) = TEST_LINE_COLOR;
 
             // Check and draw vertical lines if found.
@@ -206,34 +207,44 @@ LineSegmentation::show_lines(string path) {
 
 void
 LineSegmentation::generate_regions() {
-    this->line_regions = vector<Region>();
+    this->line_regions = vector<Region *>();
 
+    // Add first region
+    Region *r = new Region(nullptr, this->initial_lines[0]);
+    r->update_region(this->binary_img, 0);
+    this->initial_lines[0]->above = r;
+
+    // Add rest of regions
     for (int i = 0; i < this->initial_lines.size(); ++i) {
-        Line* top_line = (i == 0) ? nullptr : &this->initial_lines[i];
-        Line* bottom_line = (i == this->initial_lines.size() - 1) ? nullptr : &this->initial_lines[i + 1];
+        Line *top_line = this->initial_lines[i];
+        Line *bottom_line = (i == this->initial_lines.size() - 1) ? nullptr : this->initial_lines[i + 1];
 
         // Assign lines to region
-        Region r(top_line, bottom_line);
-        r.update_region(this->binary_img, i);
+        Region *r = new Region(top_line, bottom_line);
+        r->update_region(this->binary_img, i);
 
         // Assign regions to lines
-        top_line->below = (i != this->initial_lines.size() - 1) ? &r : nullptr;
-        bottom_line->above = (i != 0) ? &r : nullptr;
+        if (top_line != nullptr)
+            top_line->below = r;
+
+        if (bottom_line != nullptr)
+            bottom_line->above = r;
 
         this->line_regions.push_back(r);
     }
+    cout << "X";
 }
 
 
 void
 LineSegmentation::repair_lines() {
     // Loop over the regions.
-    for (auto &line : initial_lines) {
-        for (int i = 0; i < line.points.size(); i++) {
-            Point &point = line.points[i];
+    for (Line *line : initial_lines) {
+        for (int i = 0; i < line->points.size(); i++) {
+            Point &point = line->points[i];
             if (this->binary_img.at<uchar>(point.x, point.y) == 255) continue;
 
-            int x = line.points[i].x, y = line.points[i].y;
+            int x = (line->points[i]).x, y = (line->points[i]).y;
             for (auto contour : this->contours) {
                 // Check line & contour intersection
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
@@ -241,18 +252,20 @@ LineSegmentation::repair_lines() {
                     // If contour is longer than the average height ignore.
                     if (contour.br().y - contour.tl().y > this->avg_line_height * 1.5) continue;
 
+                    cout << "Component hit at " << point << endl;
+                    bool is_component_above = component_belongs_to_above_region(*line, contour);
+
                     int new_row;
                     for (int k = contour.tl().x; k < point.y + contour.width; k++) {
-                        if (!component_belongs_to_above_region(&line, contour)) {
-                            // if (line.index >= this->initial_lines.size() - 1) continue;
-
+                        if (!is_component_above) {
                             new_row = contour.tl().y;
-                            line.min_row_position = min(line.min_row_position, new_row);
+                            line->min_row_position = min(line->min_row_position, new_row);
                         } else {
                             new_row = contour.br().y;
-                            line.max_row_position = max(new_row, line.max_row_position);
+                            line->max_row_position = max(new_row, line->max_row_position);
                         }
-                        line.points[k].x = new_row;
+
+                        line->points[k].x = new_row;
                     }
                     i += (contour.width - 1);
                 }
@@ -261,7 +274,7 @@ LineSegmentation::repair_lines() {
     }
 }
 
-bool LineSegmentation::component_belongs_to_above_region(Line *line, Rect contour) {
+bool LineSegmentation::component_belongs_to_above_region(Line &line, Rect& contour) {
     // Calculate probabilities.
     vector<int> probAbovePrimes(Utilities::primes.size(), 0);
     vector<int> probBelowPrimes(Utilities::primes.size(), 0);
@@ -277,10 +290,10 @@ bool LineSegmentation::component_belongs_to_above_region(Line *line, Rect contou
             contour_point.at<float>(0, 0) = i_contour;
             contour_point.at<float>(0, 1) = j_contour;
 
-            int newProbAbove = (int) (line->above->bi_variate_gaussian_density(
-                    contour_point.clone()));
-            int newProbBelow = (int) (line->below->bi_variate_gaussian_density(
-                    contour_point.clone()));
+            int newProbAbove = (int) ((line.above != nullptr) ? (line.above->bi_variate_gaussian_density(
+                    contour_point.clone())) : 0);
+            int newProbBelow = (int) ((line.below != nullptr) ? (line.below->bi_variate_gaussian_density(
+                    contour_point.clone())) : 0);
 
             Utilities::addPrimesToVector(newProbAbove, probAbovePrimes);
             Utilities::addPrimesToVector(newProbBelow, probBelowPrimes);
@@ -308,7 +321,7 @@ vector<Mat>
 LineSegmentation::get_regions() {
     vector<Mat> ret;
     for (auto region : this->line_regions) {
-        ret.push_back(region.region.clone());
+        ret.push_back(region->region.clone());
     }
     return ret;
 }

@@ -11,6 +11,7 @@ void
 Utilities::sieve() {
     notPrimesArr[0] = notPrimesArr[1] = 1;
     for (int i = 2; i < 1e5; ++i) {
+        if (primes.size() > 20) break;
         if (notPrimesArr[i]) continue;
 
         primes.push_back(i);

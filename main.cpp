@@ -1,6 +1,9 @@
 #include <iostream>
+#include "src/LineSegmentation.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    LineSegmentation ls("../src/Data/input/1min.png");
+    ls.segment();
+
     return 0;
 }
