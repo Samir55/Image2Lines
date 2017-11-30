@@ -244,39 +244,44 @@ LineSegmentation::repair_lines() {
     for (Line *line : initial_lines) {
         for (int i = 0; i < line->points.size(); i++) {
             Point &point = line->points[i];
-            if (this->binary_img.at<uchar>(point.x, point.y) == 255) continue;
 
+            if (this->binary_img.at<uchar>(point.x, point.y) == 255) continue;
+            cout << point;
             int x = (line->points[i]).x, y = (line->points[i]).y;
             for (auto contour : this->contours) {
                 // Check line & contour intersection
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
 
                     // If contour is longer than the average height ignore.
-                    if (contour.br().y - contour.tl().y > this->avg_line_height * 1.5) continue;
+                    // if (contour.br().y - contour.tl().y > this->avg_line_height * 1.5) continue;
 
                     cout << "Component hit at " << point << endl;
                     bool is_component_above = component_belongs_to_above_region(*line, contour);
 
                     int new_row;
-                    for (int k = contour.tl().x; k < point.y + contour.width; k++) {
-                        if (!is_component_above) {
-                            new_row = contour.tl().y;
-                            line->min_row_position = min(line->min_row_position, new_row);
-                        } else {
-                            new_row = contour.br().y;
-                            line->max_row_position = max(new_row, line->max_row_position);
-                        }
+                    if (!is_component_above) {
+                        new_row = contour.tl().y;
+                        line->min_row_position = min(line->min_row_position, new_row);
+                    } else {
+                        new_row = contour.br().y;
+                        line->max_row_position = max(new_row, line->max_row_position);
+                    }
 
+                    for (int k = contour.tl().x; k < contour.tl().x + contour.width; k++) {
                         line->points[k].x = new_row;
                     }
-                    i += (contour.width - 1);
+                    i = (contour.br().x);
+
+                    break; // Contour found
                 }
             }
+            cout << "-----------------------------------------------------------------------"<<endl;
         }
+        cout << "##########################################################################"<<endl;
     }
 }
 
-bool LineSegmentation::component_belongs_to_above_region(Line &line, Rect& contour) {
+bool LineSegmentation::component_belongs_to_above_region(Line &line, Rect &contour) {
     // Calculate probabilities.
     vector<int> probAbovePrimes(Utilities::primes.size(), 0);
     vector<int> probBelowPrimes(Utilities::primes.size(), 0);

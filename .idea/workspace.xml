@@ -12,17 +12,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a5233dde-b713-42ec-8b15-2f50e7455fab" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/main.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/main.cpp.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Components/Line.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Components/Line.cpp.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Components/Region.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Components/Region.cpp.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/LineSegmentation.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/LineSegmentation.cpp.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Utilities/Utilities.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Utilities/Utilities.cpp.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/Image2Lines2" afterPath="$PROJECT_DIR$/cmake-build-debug/Image2Lines2" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Components/Line.cpp" afterPath="$PROJECT_DIR$/src/Components/Line.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Components/Line.h" afterPath="$PROJECT_DIR$/src/Components/Line.h" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/LineSegmentation.cpp.o" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/LineSegmentation.cpp" afterPath="$PROJECT_DIR$/src/LineSegmentation.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Utilities/Utilities.cpp" afterPath="$PROJECT_DIR$/src/Utilities/Utilities.cpp" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -47,8 +38,8 @@
       <file leaf-file-name="LineSegmentation.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/LineSegmentation.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="258">
-              <caret line="252" column="0" lean-forward="false" selection-start-line="252" selection-start-column="0" selection-end-line="252" selection-end-column="0" />
+            <state relative-caret-position="299">
+              <caret line="255" column="23" lean-forward="true" selection-start-line="255" selection-start-column="23" selection-end-line="255" selection-end-column="99" />
               <folding />
             </state>
           </provider>
@@ -133,8 +124,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>!line</find>
-      <find>Peak::</find>
       <find>Utilities.h&quot;</find>
       <find>s/Utilities.h&quot;</find>
       <find>main</find>
@@ -163,6 +152,8 @@
       <find>initial_lines.pu</find>
       <find>.push</find>
       <find>cout</find>
+      <find>new_row</find>
+      <find>points</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -309,12 +300,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1511973240875</updated>
-      <workItem from="1511973242047" duration="24510000" />
+      <workItem from="1511973242047" duration="25805000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="24510000" />
+    <option name="totallyTimeSpent" value="25805000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="832" extended-state="6" />
@@ -324,7 +315,7 @@
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32894737" sideWeight="0.49722221" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="CMake" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32894737" sideWeight="0.50277776" order="-1" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32894737" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32894737" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13402778" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -352,11 +343,11 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/LineSegmentation.cpp</url>
-          <line>184</line>
-          <option name="timeStamp" value="17" />
+          <line>244</line>
+          <option name="timeStamp" value="20" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="18" />
+      <option name="time" value="21" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -538,8 +529,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/LineSegmentation.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="258">
-          <caret line="252" column="0" lean-forward="false" selection-start-line="252" selection-start-column="0" selection-end-line="252" selection-end-column="0" />
+        <state relative-caret-position="299">
+          <caret line="255" column="23" lean-forward="true" selection-start-line="255" selection-start-column="23" selection-end-line="255" selection-end-column="99" />
           <folding />
         </state>
       </provider>
