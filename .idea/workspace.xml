@@ -12,17 +12,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a5233dde-b713-42ec-8b15-2f50e7455fab" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/main.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/main.cpp.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Components/Region.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Components/Region.cpp.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/LineSegmentation.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/LineSegmentation.cpp.o" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Utilities/Utilities.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Utilities/Utilities.cpp.o" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Components/Chunk.cpp.o" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Image2Lines2.dir/src/Components/Chunk.cpp.o" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cmake-build-debug/Image2Lines2" afterPath="$PROJECT_DIR$/cmake-build-debug/Image2Lines2" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main.cpp" afterPath="$PROJECT_DIR$/main.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Components/Chunk.cpp" afterPath="$PROJECT_DIR$/src/Components/Chunk.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Components/Region.cpp" afterPath="$PROJECT_DIR$/src/Components/Region.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/LineSegmentation.cpp" afterPath="$PROJECT_DIR$/src/LineSegmentation.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Utilities/Utilities.cpp" afterPath="$PROJECT_DIR$/src/Utilities/Utilities.cpp" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -47,8 +42,8 @@
       <file leaf-file-name="LineSegmentation.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/LineSegmentation.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="328">
-              <caret line="288" column="13" lean-forward="true" selection-start-line="288" selection-start-column="13" selection-end-line="288" selection-end-column="13" />
+            <state relative-caret-position="260">
+              <caret line="187" column="47" lean-forward="false" selection-start-line="187" selection-start-column="47" selection-end-line="187" selection-end-column="47" />
               <folding />
             </state>
           </provider>
@@ -57,8 +52,8 @@
       <file leaf-file-name="Chunk.cpp" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/Components/Chunk.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="299">
-              <caret line="78" column="0" lean-forward="false" selection-start-line="78" selection-start-column="0" selection-end-line="78" selection-end-column="0" />
+            <state relative-caret-position="1468">
+              <caret line="113" column="0" lean-forward="false" selection-start-line="113" selection-start-column="0" selection-end-line="113" selection-end-column="0" />
               <folding>
                 <element signature="e#49#67#0" expanded="true" />
               </folding>
@@ -193,8 +188,8 @@
         <option value="$PROJECT_DIR$/src/Components/Line.h" />
         <option value="$PROJECT_DIR$/src/Utilities/Utilities.cpp" />
         <option value="$PROJECT_DIR$/src/Components/Region.cpp" />
-        <option value="$PROJECT_DIR$/src/Components/Chunk.cpp" />
         <option value="$PROJECT_DIR$/main.cpp" />
+        <option value="$PROJECT_DIR$/src/Components/Chunk.cpp" />
         <option value="$PROJECT_DIR$/src/LineSegmentation.cpp" />
       </list>
     </option>
@@ -314,12 +309,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1511973240875</updated>
-      <workItem from="1511973242047" duration="29883000" />
+      <workItem from="1511973242047" duration="32730000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="29883000" />
+    <option name="totallyTimeSpent" value="32730000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="832" extended-state="6" />
@@ -354,7 +349,14 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="23" />
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/LineSegmentation.cpp</url>
+          <line>203</line>
+          <option name="timeStamp" value="37" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="38" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -534,8 +536,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/Components/Chunk.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="299">
-          <caret line="78" column="0" lean-forward="false" selection-start-line="78" selection-start-column="0" selection-end-line="78" selection-end-column="0" />
+        <state relative-caret-position="1468">
+          <caret line="113" column="0" lean-forward="false" selection-start-line="113" selection-start-column="0" selection-end-line="113" selection-end-column="0" />
           <folding>
             <element signature="e#49#67#0" expanded="true" />
           </folding>
@@ -544,8 +546,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/LineSegmentation.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="328">
-          <caret line="288" column="13" lean-forward="true" selection-start-line="288" selection-start-column="13" selection-end-line="288" selection-end-column="13" />
+        <state relative-caret-position="260">
+          <caret line="187" column="47" lean-forward="false" selection-start-line="187" selection-start-column="47" selection-end-line="187" selection-end-column="47" />
           <folding />
         </state>
       </provider>

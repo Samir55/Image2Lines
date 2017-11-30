@@ -185,7 +185,7 @@ LineSegmentation::get_initial_lines() {
 
             Line *new_line = new Line(valley->valley_id);
             new_line = connect_valleys(i - 1, valley, new_line, valleys_min_abs_dist);
-            if (new_line->valleys_ids.size() > 1) {
+            if (new_line->valleys_ids.size() >= 1) {
                 new_line->generate_initial_points(chunk_width, color_img.cols, map_valley);
                 this->initial_lines.push_back(new_line);
             }

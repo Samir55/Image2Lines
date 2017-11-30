@@ -56,12 +56,16 @@ Chunk::find_peaks_valleys(map<int, Valley *>& map_valley) {
         int left_val = this->histogram[i - 1], right_val = this->histogram[i], centre_val = this->histogram[i + 1];
 
         if (centre_val >= left_val && centre_val >= right_val) { // Peak detected.
+
+            if (i >= 372 && index == 1){
+                cout <<"n";
+            }
+
             if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
-                centre_val >= peaks.back().value) { // Try to get the largest peak in same region.
+                centre_val > peaks.back().value) { // Try to get the largest peak in same region.
                 peaks.back().position = i;
                 peaks.back().value = centre_val;
-            } else if (!(peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
-                         centre_val < peaks.back().value)) {
+            } else if (peaks.empty() || (i - peaks.back().position > avg_height / 2 && centre_val > 0)) {
                 peaks.push_back(Peak(i, centre_val));
             }
         }
