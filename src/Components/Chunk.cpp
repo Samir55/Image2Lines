@@ -23,7 +23,9 @@ Chunk::calculate_histogram() {
     medianBlur(this->img, img_clone, 5);
     this->img = img_clone;
 
-    int black_count = 0, current_height = 0;
+    avg_white_height = 0;
+    int black_count = 0, current_height = 0, current_white_count = 0, white_lines_count = 0;
+    vector<int> white_spaces;
     for (int i = 0; i < img_clone.rows; ++i) {
         black_count = 0;
         for (int j = 0; j < img_clone.cols; ++j) {
@@ -32,8 +34,15 @@ Chunk::calculate_histogram() {
                 this->histogram[i]++;
             }
         }
-        if (black_count) current_height++;
-        else {
+        if (black_count) {
+            current_height++;
+            if (current_white_count) {
+                white_lines_count++;
+                white_spaces.push_back(current_white_count);
+            }
+            current_white_count = 0;
+        } else {
+            current_white_count++;
             if (current_height) {
                 lines_count++;
                 avg_height += current_height;
@@ -44,11 +53,20 @@ Chunk::calculate_histogram() {
 
     // Calculate the average height.
     if (lines_count) avg_height /= lines_count;
+
+    // Calculate avg spaces height
+    sort(white_spaces.begin(), white_spaces.end());
+    for (int i = 0; i < white_spaces.size(); ++i) {
+        if (white_spaces[i] > 4 * avg_height) break;
+        avg_white_height += white_spaces[i];
+    }
+
+    if (white_lines_count) avg_white_height /= white_lines_count;
     avg_height = max(30, int(avg_height + (avg_height / 2.0)));
 }
 
 int
-Chunk::find_peaks_valleys(map<int, Valley *>& map_valley) {
+Chunk::find_peaks_valleys(map<int, Valley *> &map_valley) {
     this->calculate_histogram();
 
     // Detect Peaks.
@@ -56,10 +74,6 @@ Chunk::find_peaks_valleys(map<int, Valley *>& map_valley) {
         int left_val = this->histogram[i - 1], right_val = this->histogram[i], centre_val = this->histogram[i + 1];
 
         if (centre_val >= left_val && centre_val >= right_val) { // Peak detected.
-
-            if (i >= 372 && index == 1){
-                cout <<"n";
-            }
 
             if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
                 centre_val > peaks.back().value) { // Try to get the largest peak in same region.

@@ -38,7 +38,9 @@ private:
     vector<Rect> contours;
     /// The handwritten components found in the binary image.
     int avg_line_height;
-    ///< The average height of lines in the image.
+    /// The handwritten components found in the binary image.
+    int avg_space_height;
+    ///< The average height of spaces in the image.
     int chunk_width;
     ///< Chunk width
     /// Read the image file into CV matrix

@@ -161,17 +161,22 @@ LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int
 
 void
 LineSegmentation::get_initial_lines() {
-    int number_of_heights = 0, valleys_min_abs_dist = 0;
+    int number_of_heights = 0, number_of_spaces = 0, valleys_min_abs_dist = 0, total_space_heights = 0;
 
     // Get the histogram of the first CHUNKS_TO_BE_PROCESSED and get the overall average line height.
     for (int i = 0; i < CHUNKS_TO_BE_PROCESSED; i++) {
         int avg_height = this->chunks[i]->find_peaks_valleys(map_valley);
         if (avg_height) number_of_heights++;
+        if (this->chunks[i]->avg_white_height) number_of_spaces++;
+
         valleys_min_abs_dist += avg_height;
+        total_space_heights += this->chunks[i]->avg_white_height;
     }
     valleys_min_abs_dist /= number_of_heights;
     this->avg_line_height = valleys_min_abs_dist;
+    this->avg_space_height = total_space_heights / number_of_spaces;
 
+    vector<Line *> single_valley;
     // Start form the CHUNKS_TO_BE_PROCESSED chunk.
     for (int i = CHUNKS_TO_BE_PROCESSED - 1; i >= 0; i--) {
         if ((chunks[i]->valleys).empty()) continue;
@@ -185,15 +190,31 @@ LineSegmentation::get_initial_lines() {
 
             Line *new_line = new Line(valley->valley_id);
             new_line = connect_valleys(i - 1, valley, new_line, valleys_min_abs_dist);
-            if (new_line->valleys_ids.size() >= 1) {
-                new_line->generate_initial_points(chunk_width, color_img.cols, map_valley);
+            new_line->generate_initial_points(chunk_width, color_img.cols, map_valley);
+
+            if (new_line->valleys_ids.size() > 1) {
                 this->initial_lines.push_back(new_line);
+            } else {
+                single_valley.push_back(new_line);
             }
         }
     }
 
     // Sort the lines
     sort(this->initial_lines.begin(), this->initial_lines.end(), Line::comp_min_row_position);
+
+    vector<Line *> new_lines;
+    new_lines.push_back(this->initial_lines[this->initial_lines.size() - 1]);
+
+    cout << " TEST " <<  (0.9 * (avg_line_height + avg_space_height)) << endl;
+    // Check for lines near each other and remove them
+    for (int i = this->initial_lines.size() - 2; i >= 0; --i) {
+        if (-this->initial_lines[i]->points[0].x + new_lines.back()->points[0].x >=
+            0.9 * (avg_line_height + avg_space_height))
+            new_lines.push_back(this->initial_lines[i]);
+    }
+    reverse(new_lines.begin(), new_lines.end());
+    this->initial_lines = new_lines;
 }
 
 void
@@ -257,9 +278,26 @@ LineSegmentation::repair_lines() {
         for (int i = 0; i < line->points.size(); i++) {
             Point &point = line->points[i];
 
-            if (this->binary_img.at<uchar>(point.x, point.y) == 255) continue;
-            cout << point;
             int x = (line->points[i]).x, y = (line->points[i]).y;
+
+            // Check for vertical line intersection
+            if (this->binary_img.at<uchar>(point.x, point.y) == 255) {
+                if (i == 0) continue;
+                bool black_found = false;
+
+                if (line->points[i - 1].x != line->points[i].x) {
+                    int min_row = min(line->points[i - 1].x, line->points[i].x);
+                    int max_row = max(line->points[i - 1].x, line->points[i].x);
+                    for (int j = min_row; j <= max_row && !black_found; ++j) {
+                        if (this->binary_img.at<uchar>(j, line->points[i - 1].y) == 0) {
+                            x = j, y = line->points[i - 1].y;
+                            black_found = true;
+                        }
+                    }
+                }
+                if (!black_found) continue;
+            }
+
             for (auto contour : this->contours) {
                 // Check line & contour intersection
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
@@ -287,9 +325,9 @@ LineSegmentation::repair_lines() {
                     break; // Contour found
                 }
             }
-            cout << "-----------------------------------------------------------------------"<<endl;
+            cout << "-----------------------------------------------------------------------" << endl;
         }
-        cout << "##########################################################################"<<endl;
+        cout << "##########################################################################" << endl;
     }
 }
 
@@ -330,6 +368,7 @@ bool LineSegmentation::component_belongs_to_above_region(Line &line, Rect &conto
         prob_above += probAbovePrimes[k] * Utilities::primes[k];
         prob_below += probBelowPrimes[k] * Utilities::primes[k];
     }
+    cout << "Probability below: " << prob_above << " above: " << prob_below << endl;
 
     return prob_above < prob_below;
 }

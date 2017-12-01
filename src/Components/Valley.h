@@ -5,6 +5,8 @@
 #ifndef IMAGE2LINES2_VALLEY_H
 #define IMAGE2LINES2_VALLEY_H
 
+class Line;
+
 class Valley {
 public:
     static int ID;
@@ -17,6 +19,8 @@ public:
     ///< The row position.
     bool used;
     /// Whether it's used by a line or not.
+    Line* line;
+    /// The line that this valley is connected to
 
     Valley() : valley_id(ID++), used(false) {}
 

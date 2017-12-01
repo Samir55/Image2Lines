@@ -36,6 +36,8 @@ private:
     ///< The found valleys in this chunk.
     int avg_height;
     ///< The average line height in this chunk.
+    int avg_white_height;
+    ///< The average space height in this chunk.
     int lines_count;
     ///< The estimated number of lines in this chunk.
 
