@@ -173,7 +173,7 @@ LineSegmentation::get_initial_lines() {
     if (total_avg_height < 60)
         this->CHUNCKS_TO_BE_PROCESSED = 19;
     else
-        this->CHUNCKS_TO_BE_PROCESSED = 5;
+        this->CHUNCKS_TO_BE_PROCESSED = 7;
 
     // Get the histogram of the first CHUNKS_TO_BE_PROCESSED and get the overall average line height.
     int number_of_spaces = 0, valleys_min_abs_dist = 0, total_space_heights = 0;
@@ -223,17 +223,17 @@ LineSegmentation::get_initial_lines() {
         weight = 0.85;
     else weight = 0.6;
 
-//    vector<Line *> new_lines;
-//    new_lines.push_back(this->initial_lines[this->initial_lines.size() - 1]);
+    vector<Line *> new_lines;
+    new_lines.push_back(this->initial_lines[this->initial_lines.size() - 1]);
     cout << total_avg_height << " " << avg_space_height << " " << this->CHUNCKS_TO_BE_PROCESSED << " "<< weight << endl;
-//    // Check for lines near each other and remove them
-//    for (int i = this->initial_lines.size() - 2; i >= 0; --i) {
-//        if (-this->initial_lines[i]->points[0].x + new_lines.back()->points[0].x >=
-//            weight*(avg_line_height + avg_space_height))
-//            new_lines.push_back(this->initial_lines[i]);
-//    }
-//    reverse(new_lines.begin(), new_lines.end());
-//    this->initial_lines = new_lines;
+    // Check for lines near each other and remove them
+    for (int i = this->initial_lines.size() - 2; i >= 0; --i) {
+        if (-this->initial_lines[i]->points[0].x + new_lines.back()->points[0].x >=
+            weight*(avg_line_height + avg_space_height))
+            new_lines.push_back(this->initial_lines[i]);
+    }
+    reverse(new_lines.begin(), new_lines.end());
+    this->initial_lines = new_lines;
 }
 
 void
