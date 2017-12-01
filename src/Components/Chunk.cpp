@@ -14,6 +14,8 @@ Chunk::Chunk(int i, int c, int w, Mat img) : valleys(vector<Valley *>()), peaks(
     this->histogram.resize((unsigned long) this->img.rows);
     this->avg_height = 0;
     this->lines_count = 0;
+
+    this->calculate_histogram();
 }
 
 void
@@ -37,7 +39,6 @@ Chunk::calculate_histogram() {
         if (black_count) {
             current_height++;
             if (current_white_count) {
-                white_lines_count++;
                 white_spaces.push_back(current_white_count);
             }
             current_white_count = 0;
@@ -59,6 +60,7 @@ Chunk::calculate_histogram() {
     for (int i = 0; i < white_spaces.size(); ++i) {
         if (white_spaces[i] > 4 * avg_height) break;
         avg_white_height += white_spaces[i];
+        white_lines_count++;
     }
 
     if (white_lines_count) avg_white_height /= white_lines_count;
@@ -67,8 +69,6 @@ Chunk::calculate_histogram() {
 
 int
 Chunk::find_peaks_valleys(map<int, Valley *> &map_valley) {
-    this->calculate_histogram();
-
     // Detect Peaks.
     for (int i = 1; i < this->histogram.size() - 1; i++) {
         int left_val = this->histogram[i - 1], right_val = this->histogram[i], centre_val = this->histogram[i + 1];

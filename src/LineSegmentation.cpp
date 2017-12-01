@@ -161,10 +161,24 @@ LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int
 
 void
 LineSegmentation::get_initial_lines() {
-    int number_of_heights = 0, number_of_spaces = 0, valleys_min_abs_dist = 0, total_space_heights = 0;
+    // First determine how many chunks to process
+    int total_avg_height = 0, number_of_heights = 0;
+    for (int i = 0; i < this->chunks.size(); ++i) {
+        total_avg_height += this->chunks[i]->avg_height;
+        if (this->chunks[i]->avg_height)
+            number_of_heights++;
+    }
+    total_avg_height /= number_of_heights;
+
+    if (total_avg_height < 60)
+        this->CHUNCKS_TO_BE_PROCESSED = 19;
+    else
+        this->CHUNCKS_TO_BE_PROCESSED = 5;
 
     // Get the histogram of the first CHUNKS_TO_BE_PROCESSED and get the overall average line height.
-    for (int i = 0; i < CHUNKS_TO_BE_PROCESSED; i++) {
+    int number_of_spaces = 0, valleys_min_abs_dist = 0, total_space_heights = 0;
+    number_of_heights = 0;
+    for (int i = 0; i < this->CHUNCKS_TO_BE_PROCESSED; i++) {
         int avg_height = this->chunks[i]->find_peaks_valleys(map_valley);
         if (avg_height) number_of_heights++;
         if (this->chunks[i]->avg_white_height) number_of_spaces++;
@@ -178,7 +192,7 @@ LineSegmentation::get_initial_lines() {
 
     vector<Line *> single_valley;
     // Start form the CHUNKS_TO_BE_PROCESSED chunk.
-    for (int i = CHUNKS_TO_BE_PROCESSED - 1; i >= 0; i--) {
+    for (int i = this->CHUNCKS_TO_BE_PROCESSED - 1; i >= 0; i--) {
         if ((chunks[i]->valleys).empty()) continue;
 
         // Connect each valley with the nearest ones in the left chunks.
@@ -203,18 +217,23 @@ LineSegmentation::get_initial_lines() {
     // Sort the lines
     sort(this->initial_lines.begin(), this->initial_lines.end(), Line::comp_min_row_position);
 
-    vector<Line *> new_lines;
-    new_lines.push_back(this->initial_lines[this->initial_lines.size() - 1]);
+    // Get the weight
+    float weight;
+    if (total_avg_height * 1.2 < avg_space_height)
+        weight = 0.85;
+    else weight = 0.6;
 
-    cout << " TEST " <<  (0.9 * (avg_line_height + avg_space_height)) << endl;
-    // Check for lines near each other and remove them
-    for (int i = this->initial_lines.size() - 2; i >= 0; --i) {
-        if (-this->initial_lines[i]->points[0].x + new_lines.back()->points[0].x >=
-            0.9 * (avg_line_height + avg_space_height))
-            new_lines.push_back(this->initial_lines[i]);
-    }
-    reverse(new_lines.begin(), new_lines.end());
-    this->initial_lines = new_lines;
+//    vector<Line *> new_lines;
+//    new_lines.push_back(this->initial_lines[this->initial_lines.size() - 1]);
+    cout << total_avg_height << " " << avg_space_height << " " << this->CHUNCKS_TO_BE_PROCESSED << " "<< weight << endl;
+//    // Check for lines near each other and remove them
+//    for (int i = this->initial_lines.size() - 2; i >= 0; --i) {
+//        if (-this->initial_lines[i]->points[0].x + new_lines.back()->points[0].x >=
+//            weight*(avg_line_height + avg_space_height))
+//            new_lines.push_back(this->initial_lines[i]);
+//    }
+//    reverse(new_lines.begin(), new_lines.end());
+//    this->initial_lines = new_lines;
 }
 
 void
@@ -305,7 +324,6 @@ LineSegmentation::repair_lines() {
                     // If contour is longer than the average height ignore.
                     // if (contour.br().y - contour.tl().y > this->avg_line_height * 1.5) continue;
 
-                    cout << "Component hit at " << point << endl;
                     bool is_component_above = component_belongs_to_above_region(*line, contour);
 
                     int new_row;
@@ -325,9 +343,7 @@ LineSegmentation::repair_lines() {
                     break; // Contour found
                 }
             }
-            cout << "-----------------------------------------------------------------------" << endl;
         }
-        cout << "##########################################################################" << endl;
     }
 }
 
@@ -368,7 +384,6 @@ bool LineSegmentation::component_belongs_to_above_region(Line &line, Rect &conto
         prob_above += probAbovePrimes[k] * Utilities::primes[k];
         prob_below += probBelowPrimes[k] * Utilities::primes[k];
     }
-    cout << "Probability below: " << prob_above << " above: " << prob_below << endl;
 
     return prob_above < prob_below;
 }
@@ -379,5 +394,6 @@ LineSegmentation::get_regions() {
     for (auto region : this->line_regions) {
         ret.push_back(region->region.clone());
     }
+
     return ret;
 }

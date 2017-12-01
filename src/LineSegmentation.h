@@ -43,6 +43,10 @@ private:
     ///< The average height of spaces in the image.
     int chunk_width;
     ///< Chunk width
+    int CHUNCKS_TO_BE_PROCESSED = 10;
+    ///< Chunk width
+
+
     /// Read the image file into CV matrix
     void read_image();
 
