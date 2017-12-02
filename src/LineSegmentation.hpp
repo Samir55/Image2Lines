@@ -27,21 +27,31 @@ class LineSegmentation;
 struct Line {
     friend class LineSegmentation;
 
+    friend class Region;
+
 private:
-    int index;
-    ///< Index of the line in the vector.
+    Region *above;
+    ///< Region above the line.
+    Region *below;
+    ///< Region below the line.
     vector<valley_id> valleys_ids;
     ///< The ids of the valleys.
-    int start_row_position;
+    int min_row_position;
     ///< The row at which the region starts.
-    int end_row_position;
+    int max_row_position;
     ///< The row at which the region ends.
-    int height;
-    ///< The height of the line region above this line separator.
     vector<Point> points;
     ///< The points representing the line.
 
-    Line(int idx, int initial_valley_id);
+    Line(int initial_valley_id);
+
+    /// Generate the initial line points.
+    void
+    generate_initial_points(int chunk_width, int img_width, map<int, Valley *> map_valley);
+
+    /// Sort accendingly according to the min row position.
+    static bool
+    comp_min_row_position(const Line *a, const Line *b);
 };
 
 /// A class representing the peaks (local maximum points in the histogram).
