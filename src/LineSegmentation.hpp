@@ -58,7 +58,7 @@ public:
 
     Peak(int p, int v, int s, int e) : position(p), value(v) {}
 
-    /// Compare according to the value.
+    /// Compare according to the value. // ToDo @Samir55 change that when finishing.
     bool
     operator<(const Peak &p) const;
 
