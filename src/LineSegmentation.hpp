@@ -207,7 +207,7 @@ private:
 class LineSegmentation
 {
 private:
-    bool notPrimesArr[100007];
+    bool not_primes_arr[100007];
     vector<int> primes;
 
     void

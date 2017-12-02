@@ -685,13 +685,13 @@ Region::bi_variate_gaussian_density(Mat point)
 void
 LineSegmentation::sieve()
 {
-    notPrimesArr[0] = notPrimesArr[1] = 1;
+    not_primes_arr[0] = not_primes_arr[1] = 1;
     for (int i = 2; i < 1e5; ++i) {
-        if (notPrimesArr[i]) continue;
+        if (not_primes_arr[i]) continue;
 
         primes.push_back(i);
         for (int j = i * 2; j < 1e5; j += i) {
-            notPrimesArr[j] = 1;
+            not_primes_arr[j] = 1;
         }
     }
 }
