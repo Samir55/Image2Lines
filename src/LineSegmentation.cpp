@@ -112,7 +112,7 @@ LineSegmentation::generate_chunks()
 Line*
 LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist)
 {
-    if (i == 0 || chunks[i]->valleys.empty()) return line;
+    if (i <= 0 || chunks[i]->valleys.empty()) return line;
 
     // Choose the closest valley in right chunk to the start valley.
     int connected_to = -1;
