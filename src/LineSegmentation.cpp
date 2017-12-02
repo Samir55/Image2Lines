@@ -230,7 +230,7 @@ LineSegmentation::show_lines(string path) {
 }
 
 void
-LineSegmentation::update_regions() {
+LineSegmentation::generate_regions() {
     this->line_regions = vector<Region>();
 
     for (auto line : this->initial_lines) {
@@ -330,16 +330,16 @@ LineSegmentation::repair_lines() {
 }
 
 vector<cv::Mat>
-LineSegmentation::get_lines() {
+LineSegmentation::segment() {
     this->pre_process_image();
     this->find_contours();
     this->generate_chunks();
     this->get_initial_lines();
     this->generate_initial_points();
     this->show_lines("Initial_Lines.jpg");
-    this->update_regions();
+    this->generate_regions();
     this->repair_lines();
-    this->update_regions();
+    this->generate_regions();
     this->show_lines("Final_Lines.jpg");
     return this->get_regions();
 }
@@ -413,7 +413,7 @@ Chunk::calculate_histogram() {
 }
 
 int
-Chunk::find_peaks_valleys() {
+Chunk::find_peaks_valleys(map<int, Valley *>& map_valley) {
     this->calculate_histogram();
 
     // Detect Peaks.

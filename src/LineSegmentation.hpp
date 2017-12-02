@@ -169,7 +169,7 @@ class Chunk
     /// \param map_valley to fill it
     /// \return int the average line height in this chunk.
     int
-    find_peaks_valleys(map<int, Valley *>& map_valley);
+    find_peaks_valleys(map<int, Valley *> &map_valley);
 
 private:
     int index;
@@ -216,12 +216,14 @@ private:
 public:
     LineSegmentation(string path_of_image);
 
-    /// Generate the lines found in the saved image/
+    /// Generate the lines found in the saved image.
     /// \return vector<cv::Mat> a vector containing each line as a 2D mat.
     vector<cv::Mat>
-    get_lines();
+    segment();
 
 private:
+    string image_path;
+    ///< Path of the image.
     cv::Mat color_img;
     ///< Used for debugging only.
     cv::Mat grey_img;
@@ -230,6 +232,10 @@ private:
     ///< The preprocessed image.
     vector<Chunk> chunks;
     ///< The image chunks.
+    map<int, Chunk *> chunk_map;
+    ///< Map the Chunk id and its corresponding Chunk pointer
+    map<int, Valley *> map_valley;
+    ///< Map the Valley id and its corresponding Valley pointer.
     vector<Line> initial_lines;
     ///< The initial lines.
     vector<Region> line_regions;
@@ -238,6 +244,13 @@ private:
     /// The handwritten components found in the binary image.
     int avg_line_height;
     ///< The average height of lines in the image.
+    int avg_space_height;
+    ///< The average height of white spaces in the image.
+    // ToDo @Samir55 add CHUNKS_TO_BE_PROCESSED and chunk_width when needed.
+
+    /// Read the image file into CV matrix
+    void
+    read_image();
 
     /// Apply OTSU threshold and Binarization to the grey image.
     void
@@ -259,16 +272,21 @@ private:
     void
     generate_initial_points();
 
-    /// Update the lines regions (A 2D mat describing each line in the image).
+    /// Generate the lines regions (A 2D mat describing each line in the image).
     void
-    update_regions();
+    generate_regions();
 
+    /// ToDo @Samir55.
     vector<cv::Mat>
     get_regions();
 
     /// Use statistical approach to repair the initial lines (refer to the paper).
     void
     repair_lines();
+
+    /// Check if the component belongs to the above region
+    bool
+    component_belongs_to_above_region(Line &, Rect &);
 
     /// Draw the lines on the original color image for debugging.
     /// \param path string the path of the output image.
