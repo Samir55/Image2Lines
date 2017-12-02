@@ -203,12 +203,16 @@ LineSegmentation::show_lines(string path)
 void
 LineSegmentation::generate_regions()
 {
+    // Sort lines by row position.
+    sort(this->initial_lines.begin(), this->initial_lines.end(), Line::comp_min_row_position);
+
     this->line_regions = vector<Region *>();
 
     // Add first region
     Region *r = new Region(nullptr, this->initial_lines[0]);
     r->update_region(this->binary_img, 0);
     this->initial_lines[0]->above = r;
+    this->line_regions.push_back(r);
 
     // Add rest of regions
     for (int i = 0; i < this->initial_lines.size(); ++i) {
@@ -217,7 +221,7 @@ LineSegmentation::generate_regions()
 
         // Assign lines to region
         Region *r = new Region(top_line, bottom_line);
-        r->update_region(this->binary_img, i);
+        bool res = r->update_region(this->binary_img, i);
 
         // Assign regions to lines
         if (top_line != nullptr)
@@ -226,6 +230,7 @@ LineSegmentation::generate_regions()
         if (bottom_line != nullptr)
             bottom_line->above = r;
 
+        if (!res)
         this->line_regions.push_back(r);
     }
 }
@@ -263,7 +268,7 @@ LineSegmentation::repair_lines()
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
 
                     // If contour is longer than the average height ignore.
-                    // if (contour.br().y - contour.tl().y > this->avg_line_height * 1.5) continue;
+                     if (contour.br().y - contour.tl().y > this->avg_line_height * 2.1) continue;
 
                     bool is_component_above = component_belongs_to_above_region(*line, contour);
 
@@ -442,7 +447,7 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
     for (int i = 1; i < this->histogram.size() - 1; i++) {
         int left_val = this->histogram[i - 1], right_val = this->histogram[i], centre_val = this->histogram[i + 1];
         if (centre_val > left_val && centre_val > right_val) { // Peak detected.
-            if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
+            if (!peaks.empty() && i - peaks.back().position <= avg_height / 2 &&
                 centre_val >= peaks.back().value) { // Try to get the largest peak in same region.
                 peaks.back().position = i;
                 peaks.back().value = centre_val;
@@ -464,12 +469,16 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
     sort(peaks.begin(), peaks.end(), Peak::comp);
 
     // Search for valleys between 2 peaks.
-    for (int i = 1; i <= peaks.size(); i++) {
-        int min_position = peaks[i - 1].position;
-        int min_value = peaks[i - 1].value;
+    for (int i = 1; i < peaks.size(); i++) {
+        pair<int, int> expected_valley_positions[4];
 
-        for (int j = (peaks[i - 1].position + avg_height / 3);
-             j < (i == peaks.size() ? this->img.rows : peaks[i].position - avg_height / 3); j++) {
+
+        int min_position = (peaks[i - 1].position + peaks[i].position)/2;
+
+        int min_value = this->histogram[min_position];
+
+        for (int j = (peaks[i - 1].position + avg_height / 2); j < (i == peaks.size() ? this->img.rows : peaks[i].position - avg_height - 30); j++) {
+
             int valley_black_count = 0;
             for (int l = 0; l < this->img.cols; ++l) {
                 if (this->img.at<uchar>(j, l) == 0) {
@@ -490,7 +499,7 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
             }
         }
 
-        Valley *new_valley = new Valley(this->index, min_position);
+        auto *new_valley = new Valley(this->index, min_position);
 
         valleys.push_back(new_valley);
         map_valley[new_valley->valley_id] = new_valley;
@@ -592,7 +601,10 @@ Region::update_region(Mat &binary_image, int region_id)
     int min_region_row = row_offset = (top == nullptr) ? 0 : top->min_row_position;
     int max_region_row = (bottom == nullptr) ? binary_image.rows : bottom->max_row_position;
 
-    region = Mat::ones(max_region_row - min_region_row, binary_image.cols, CV_8U) * 255;
+    //ToDo @Samir55
+    int start = min(min_region_row, max_region_row), end = max(min_region_row, max_region_row);
+
+    region = Mat::ones(end -start, binary_image.cols, CV_8U) * 255;
 
     // Fill region.
     if (bottom != nullptr) {
@@ -605,9 +617,6 @@ Region::update_region(Mat &binary_image, int region_id)
     }
     calculate_mean();
     calculate_covariance();
-
-    imwrite("out/" + string("Region") + to_string(region_id) + ".jpg",
-            region);
 
     return countNonZero(region) == region.cols * region.rows;
 }

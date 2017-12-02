@@ -250,7 +250,7 @@ private:
     ///< The average height of white spaces in the image.
     int chunk_width;
     ///< width of the chunk.
-    // ToDo @Samir55 add CHUNKS_TO_BE_PROCESSED and chunk_width when needed.
+    // ToDo @Samir55 add CHUNKS_TO_BE_PROCESSED when needed.
 
     /// Read the image file into CV matrix
     void
