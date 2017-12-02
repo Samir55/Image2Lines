@@ -96,24 +96,39 @@ class Region {
     friend class LineSegmentation;
 
 private:
+    int region_id;
+    ///< Region id.
     cv::Mat region;
     ///< 2D matrix representing the region.
+    Line *top;
+    ///< Region top boundaries;
+    Line *bottom;
+    ///< Region bottom boundaries;
     int start_row;
     ///<
     int end_row;
     ///<
-    vector<int> row_offset;
-    ///< A vector containing the offset of each col to the original image matrix.
+    int row_offset;
+    ///< The offset of each col to the original image matrix.
     cv::Mat covariance;
     ///< The covariance of the matrix.
     cv::Vec2f mean;
     ///< The mean of the matrix.
 
-    Region(cv::Mat a, vector<int> ro);
+    Region(Line *top, Line *bottom);
 
+    /// Get the region matrix
+    /// \param img
+    /// \param region_id
+    /// \return
+    bool
+    update_region(Mat &img, int);
+
+    /// Calculate region black pixels mean relative to the whole image dimensions
     void
     calculate_mean();
 
+    /// Calculate region black pixels covariance relative to the whole image dimensions
     void
     calculate_covariance();
 
