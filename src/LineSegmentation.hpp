@@ -70,7 +70,9 @@ public:
 /// A class representing the valleys (local minimum points in the histogram)
 class Valley {
 public:
-    int chunk_order;
+    static int ID;
+    ///< Next available id.
+    int chunk_index;
     ///< The index of the chunk in the chunks vector.
     int valley_id;
     ///< The valley id.
@@ -78,10 +80,12 @@ public:
     ///< The row position.
     bool used;
     /// Whether it's used by a line or not.
+    Line* line;
+    /// The line to which this valley is connected.
 
-    Valley(int v_id) : valley_id(v_id), used(false) {}
+    Valley() : valley_id(ID++), used(false) {}
 
-    Valley(int c_id, int v_id, int p, int v) : chunk_order(c_id), valley_id(v_id), position(p), used(false) {}
+    Valley(int c_id, int p) : chunk_index(c_id), valley_id(ID++), position(p), used(false) {}
 
     static bool
     comp(const Valley *a, const Valley *b);

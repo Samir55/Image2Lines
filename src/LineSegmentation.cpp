@@ -167,10 +167,10 @@ LineSegmentation::generate_initial_points() {
         sort(line.valleys_ids.begin(), line.valleys_ids.end());
 
         // Add line points in the first chunks having no valleys.
-        if (all_valleys_ids[line.valleys_ids.front()]->chunk_order > 0) {
+        if (all_valleys_ids[line.valleys_ids.front()]->chunk_index > 0) {
             previous_row = all_valleys_ids[line.valleys_ids.front()]->position;
             max_row_position = min_row_position = previous_row;
-            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_order].start_col; j++) {
+            for (int j = 0; j < this->chunks[all_valleys_ids[line.valleys_ids.front()]->chunk_index].start_col; j++) {
                 if (c++ == j)
                     line.points.push_back(Point(previous_row, j));
             }
@@ -178,7 +178,7 @@ LineSegmentation::generate_initial_points() {
 
         // Add line points between the valleys.
         for (auto id : line.valleys_ids) {
-            int chunk_order = all_valleys_ids[id]->chunk_order, chunk_row = all_valleys_ids[id]->position;
+            int chunk_order = all_valleys_ids[id]->chunk_index, chunk_row = all_valleys_ids[id]->position;
             for (int j = this->chunks[chunk_order].start_col;
                  j < this->chunks[chunk_order].start_col + chunk_width; j++) {
                 min_row_position = min(min_row_position, chunk_row);
@@ -194,8 +194,8 @@ LineSegmentation::generate_initial_points() {
         }
 
         // Add line points in the last chunks having no valleys.
-        if (CHUNKS_NUMBER - 1 > all_valleys_ids[line.valleys_ids.back()]->chunk_order) {
-            int chunk_order = all_valleys_ids[line.valleys_ids.back()]->chunk_order,
+        if (CHUNKS_NUMBER - 1 > all_valleys_ids[line.valleys_ids.back()]->chunk_index) {
+            int chunk_order = all_valleys_ids[line.valleys_ids.back()]->chunk_index,
                     chunk_row = all_valleys_ids[line.valleys_ids.back()]->position;
             for (int j = this->chunks[chunk_order].start_col + chunk_width; j < color_img.cols; j++) {
                 if (c++ == j)
@@ -469,6 +469,8 @@ bool
 Peak::comp(const Peak &a, const Peak &b) {
     return a.position < b.position;
 }
+
+int Valley::ID = 0;
 
 bool
 Valley::comp(const Valley *a, const Valley *b) {
