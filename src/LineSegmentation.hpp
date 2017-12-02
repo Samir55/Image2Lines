@@ -24,7 +24,8 @@ using namespace std;
 class LineSegmentation;
 
 /// A class representing the separator between line regions.
-struct Line {
+class Line
+{
     friend class LineSegmentation;
 
     friend class Region;
@@ -55,18 +56,24 @@ private:
 };
 
 /// A class representing the peaks (local maximum points in the histogram).
-class Peak {
+class Peak
+{
 public:
     int position;
     ///< The row position.
     int value;
     ///< The number of foreground pixels.
 
-    Peak() {}
+    Peak()
+    {}
 
-    Peak(int p, int v) : position(p), value(v) {}
+    Peak(int p, int v)
+        : position(p), value(v)
+    {}
 
-    Peak(int p, int v, int s, int e) : position(p), value(v) {}
+    Peak(int p, int v, int s, int e)
+        : position(p), value(v)
+    {}
 
     /// Compare according to the value. // ToDo @Samir55 change that when finishing.
     bool
@@ -78,7 +85,8 @@ public:
 };
 
 /// A class representing the valleys (local minimum points in the histogram)
-class Valley {
+class Valley
+{
 public:
     static int ID;
     ///< Next available id.
@@ -90,19 +98,24 @@ public:
     ///< The row position.
     bool used;
     /// Whether it's used by a line or not.
-    Line* line;
+    Line *line;
     /// The line to which this valley is connected.
 
-    Valley() : valley_id(ID++), used(false) {}
+    Valley()
+        : valley_id(ID++), used(false)
+    {}
 
-    Valley(int c_id, int p) : chunk_index(c_id), valley_id(ID++), position(p), used(false) {}
+    Valley(int c_id, int p)
+        : chunk_index(c_id), valley_id(ID++), position(p), used(false)
+    {}
 
     static bool
     comp(const Valley *a, const Valley *b);
 };
 
 /// A class representing the line regions.
-class Region {
+class Region
+{
     friend class LineSegmentation;
 
 private:
@@ -148,16 +161,18 @@ private:
 };
 
 /// Image Chunk.
-class Chunk {
+class Chunk
+{
     friend class LineSegmentation;
 
     /// Valleys and peaks detection in this image chunk.
+    /// \param map_valley to fill it
     /// \return int the average line height in this chunk.
     int
-    find_peaks_valleys();
+    find_peaks_valleys(map<int, Valley *>& map_valley);
 
 private:
-    int order;
+    int index;
     /// The index of the chunk.
     int start_col;
     ///< The start column position.
@@ -173,6 +188,8 @@ private:
     ///< The found valleys in this chunk.
     int avg_height;
     ///< The average line height in this chunk.
+    int avg_white_height;
+    ///< The average space height in this chunk.
     int lines_count;
     ///< The estimated number of lines in this chunk.
 
@@ -180,17 +197,21 @@ private:
 
     /// Calculate the chunk histogram (Y projection profile).
     /// This function is called by find_peaks_valleys.
-    void calculate_histogram();
+    void
+    calculate_histogram();
 };
 
 /// Line Segmentation class.
-class LineSegmentation {
+class LineSegmentation
+{
 private:
     bool notPrimesArr[100007];
     vector<int> primes;
 
-    void sieve();
-    void addPrimesToVector(int, vector<int> &);
+    void
+    sieve();
+    void
+    addPrimesToVector(int, vector<int> &);
 
 public:
     LineSegmentation(string path_of_image);

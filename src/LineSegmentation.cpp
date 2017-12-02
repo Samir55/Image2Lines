@@ -58,7 +58,7 @@ LineSegmentation::find_contours() {
             // Check for intersection/union.
             if ((rectangle3.area() == bound_rect[i].area()) || (rectangle3.area() == bound_rect[j].area())) {
                 is_repeated = true;
-                rectangle3 = bound_rect[i] | bound_rect[j]; //merging
+                rectangle3 = bound_rect[i] | bound_rect[j]; // Merging.
                 Rect2d merged_rectangle(rectangle3.tl().x, rectangle3.tl().y, rectangle3.width, rectangle3.height);
 
                 // Push in merged rectangle after checking all the inner loop.
@@ -353,13 +353,14 @@ LineSegmentation::get_regions() {
     return ret;
 }
 
-Chunk::Chunk(int o, int c, int w, cv::Mat i) : valleys(vector<Valley *>()), peaks(vector<Peak>()) {
-    this->order = o;
+Chunk::Chunk(int i, int c, int w, cv::Mat m) : valleys(vector<Valley *>()), peaks(vector<Peak>()) {
+    this->index = i;
     this->start_col = c;
     this->width = w;
-    this->img = i.clone();
+    this->img = m.clone();
     this->histogram.resize((unsigned long) this->img.rows);
     this->avg_height = 0;
+    this->avg_white_height = 0;
     this->lines_count = 0;
 }
 
@@ -370,7 +371,9 @@ Chunk::calculate_histogram() {
     cv::medianBlur(this->img, img_clone, 5);
     this->img = img_clone;
 
-    int black_count = 0, current_height = 0;
+    int black_count = 0, current_height = 0, current_white_count = 0, white_lines_count = 0;
+    vector<int> white_spaces;
+
     for (int i = 0; i < img_clone.rows; ++i) {
         black_count = 0;
         for (int j = 0; j < img_clone.cols; ++j) {
@@ -379,8 +382,14 @@ Chunk::calculate_histogram() {
                 this->histogram[i]++;
             }
         }
-        if (black_count) current_height++;
-        else {
+        if (black_count) {
+            current_height++;
+            if (current_white_count) {
+                white_spaces.push_back(current_white_count);
+            }
+            current_white_count = 0;
+        } else {
+            current_white_count++;
             if (current_height) {
                 lines_count++;
                 avg_height += current_height;
@@ -389,7 +398,16 @@ Chunk::calculate_histogram() {
         }
     }
 
-    // Calculate the average height.
+    // Calculate the white spaces average height.
+    sort(white_spaces.begin(), white_spaces.end());
+    for (int i = 0; i < white_spaces.size(); ++i) {
+        if (white_spaces[i] > 4 * avg_height) break;
+        avg_white_height += white_spaces[i];
+        white_lines_count++;
+    }
+    if (white_lines_count) avg_white_height /= white_lines_count;
+
+    // Calculate the average line height.
     if (lines_count) avg_height /= lines_count;
     avg_height = max(30, int(avg_height + (avg_height / 2.0)));
 }
@@ -447,10 +465,11 @@ Chunk::find_peaks_valleys() {
                 min_position = j;
             }
         }
-        Valley *new_valley = new Valley(this->order, int(all_valleys_ids.size()), min_position, min_value);
+
+        Valley *new_valley = new Valley(this->index, min_position);
 
         valleys.push_back(new_valley);
-        all_valleys_ids[valleys.back()->valley_id] = new_valley;
+        map_valley[new_valley->valley_id] = new_valley;
     }
     return int(ceil(avg_height));
 }
