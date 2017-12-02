@@ -230,15 +230,15 @@ private:
     ///< The grey image.
     cv::Mat binary_img;
     ///< The preprocessed image.
-    vector<Chunk> chunks;
+    vector<Chunk*> chunks;
     ///< The image chunks.
     map<int, Chunk *> chunk_map;
     ///< Map the Chunk id and its corresponding Chunk pointer
     map<int, Valley *> map_valley;
     ///< Map the Valley id and its corresponding Valley pointer.
-    vector<Line> initial_lines;
+    vector<Line*> initial_lines;
     ///< The initial lines.
-    vector<Region> line_regions;
+    vector<Region*> line_regions;
     ///< The regions of all found initial lines in the image.
     vector<Rect> contours;
     /// The handwritten components found in the binary image.
