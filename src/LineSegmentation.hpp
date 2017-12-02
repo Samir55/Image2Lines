@@ -22,6 +22,8 @@ using namespace cv;
 using namespace std;
 
 class LineSegmentation;
+class Region;
+class Valley;
 
 /// A class representing the separator between line regions.
 class Line
@@ -246,6 +248,8 @@ private:
     ///< The average height of lines in the image.
     int avg_space_height;
     ///< The average height of white spaces in the image.
+    int chunk_width;
+    ///< width of the chunk.
     // ToDo @Samir55 add CHUNKS_TO_BE_PROCESSED and chunk_width when needed.
 
     /// Read the image file into CV matrix
@@ -267,10 +271,6 @@ private:
     /// Get the initial (candidate lines).
     void
     get_initial_lines();
-
-    /// Generate the initial line points.
-    void
-    generate_initial_points();
 
     /// Generate the lines regions (A 2D mat describing each line in the image).
     void
@@ -298,6 +298,6 @@ private:
     /// \param i integer The index of the chunk.
     /// \param current_valley Valley The current valley.
     /// \return Line a candidate(initial line)
-    Line
-    connect_valleys(int i, Valley *current_valley, Line &line, int valleys_min_abs_dist);
+    Line*
+    connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist);
 };

@@ -93,7 +93,7 @@ void
 LineSegmentation::generate_chunks()
 {
     int width = binary_img.cols;
-    int chunk_width = width / CHUNKS_NUMBER;
+    chunk_width = width / CHUNKS_NUMBER;
 
 
     for (int i_chunk = 0, start_pixel = 0; i_chunk < CHUNKS_NUMBER; ++i_chunk) {
@@ -109,8 +109,8 @@ LineSegmentation::generate_chunks()
     }
 }
 
-Line
-LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line, int valleys_min_abs_dist)
+Line*
+LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist)
 {
     if (i == 0 || chunks[i]->valleys.empty()) return line;
 
@@ -134,7 +134,7 @@ LineSegmentation::connect_valleys(int i, Valley *current_valley, Line &line, int
         return line;
     }
 
-    line.valleys_ids.push_back(this->chunks[i]->valleys[connected_to]->valley_id);
+    line->valleys_ids.push_back(this->chunks[i]->valleys[connected_to]->valley_id);
     Valley *v = this->chunks[i]->valleys[connected_to];
     v->used = true;
     return connect_valleys(i - 1, v, line, valleys_min_abs_dist);
