@@ -13,7 +13,7 @@
 #include "opencv2/core/core.hpp"
 
 #define CHUNKS_NUMBER 20
-#define CHUNKS_TO_BE_PROCESSED 7
+#define CHUNKS_TO_BE_PROCESSED 5
 #define TEST_LINE_COLOR cv::Vec3b(255, 0, 255) // Magenta color.
 
 typedef int valley_id;

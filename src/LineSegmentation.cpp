@@ -3,8 +3,7 @@
 map<valley_id, Valley *> all_valleys_ids; ///< A Map from valley id to it's pointer.
 
 
-LineSegmentation::LineSegmentation(string path_of_image)
-{
+LineSegmentation::LineSegmentation(string path_of_image) {
     this->image_path = path_of_image;
 
     // Initialize Sieve ToDo @Samir55.
@@ -12,15 +11,13 @@ LineSegmentation::LineSegmentation(string path_of_image)
 }
 
 void
-LineSegmentation::read_image()
-{
+LineSegmentation::read_image() {
     this->color_img = imread(this->image_path, CV_LOAD_IMAGE_COLOR);
     this->grey_img = imread(this->image_path, CV_LOAD_IMAGE_GRAYSCALE);
 }
 
 void
-LineSegmentation::pre_process_image()
-{
+LineSegmentation::pre_process_image() {
     // More filters are about to be applied.
     cv::Mat preprocessed_img, smoothed_img;
 
@@ -33,8 +30,7 @@ LineSegmentation::pre_process_image()
 }
 
 void
-LineSegmentation::find_contours()
-{
+LineSegmentation::find_contours() {
     cv::Mat img_clone = this->binary_img;
 
     vector<vector<Point>> contours;
@@ -90,8 +86,7 @@ LineSegmentation::find_contours()
 }
 
 void
-LineSegmentation::generate_chunks()
-{
+LineSegmentation::generate_chunks() {
     int width = binary_img.cols;
     chunk_width = width / CHUNKS_NUMBER;
 
@@ -100,7 +95,7 @@ LineSegmentation::generate_chunks()
         Chunk *c = new Chunk(i_chunk, start_pixel, chunk_width, cv::Mat(binary_img,
                                                                         cv::Range(0, binary_img.rows), // Rows.
                                                                         cv::Range(start_pixel, start_pixel +
-                                                                            chunk_width)));
+                                                                                               chunk_width)));
         this->chunks.push_back(c);
 
         imwrite("Chunk" + to_string(i_chunk) + ".jpg", this->chunks.back()->img);
@@ -109,9 +104,8 @@ LineSegmentation::generate_chunks()
     }
 }
 
-Line*
-LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist)
-{
+Line *
+LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist) {
     if (i <= 0 || chunks[i]->valleys.empty()) return line;
 
     // Choose the closest valley in right chunk to the start valley.
@@ -142,8 +136,7 @@ LineSegmentation::connect_valleys(int i, Valley *current_valley, Line *line, int
 
 // ToDo @Samir55 Update when needed.
 void
-LineSegmentation::get_initial_lines()
-{
+LineSegmentation::get_initial_lines() {
     int number_of_heights = 0, valleys_min_abs_dist = 0;
 
     // Get the histogram of the first CHUNKS_TO_BE_PROCESSED and get the overall average line height.
@@ -177,8 +170,7 @@ LineSegmentation::get_initial_lines()
 }
 
 void
-LineSegmentation::show_lines(string path)
-{
+LineSegmentation::show_lines(string path) {
     cv::Mat img_clone = this->color_img.clone();
 
     for (auto line : initial_lines) {
@@ -201,29 +193,28 @@ LineSegmentation::show_lines(string path)
 }
 
 void
-LineSegmentation::generate_regions()
-{
+LineSegmentation::generate_regions() {
     // Sort lines by row position.
     sort(this->initial_lines.begin(), this->initial_lines.end(), Line::comp_min_row_position);
 
     this->line_regions = vector<Region *>();
 
-    // Add first region
+    // Add first region.
     Region *r = new Region(nullptr, this->initial_lines[0]);
     r->update_region(this->binary_img, 0);
     this->initial_lines[0]->above = r;
     this->line_regions.push_back(r);
 
-    // Add rest of regions
+    // Add rest of regions.
     for (int i = 0; i < this->initial_lines.size(); ++i) {
         Line *top_line = this->initial_lines[i];
         Line *bottom_line = (i == this->initial_lines.size() - 1) ? nullptr : this->initial_lines[i + 1];
 
-        // Assign lines to region
+        // Assign lines to region.
         Region *r = new Region(top_line, bottom_line);
         bool res = r->update_region(this->binary_img, i);
 
-        // Assign regions to lines
+        // Assign regions to lines.
         if (top_line != nullptr)
             top_line->below = r;
 
@@ -231,13 +222,12 @@ LineSegmentation::generate_regions()
             bottom_line->above = r;
 
         if (!res)
-        this->line_regions.push_back(r);
+            this->line_regions.push_back(r);
     }
 }
 
 void
-LineSegmentation::repair_lines()
-{
+LineSegmentation::repair_lines() {
     // Loop over the regions.
     for (Line *line : initial_lines) {
         for (int i = 0; i < line->points.size(); i++) {
@@ -268,7 +258,7 @@ LineSegmentation::repair_lines()
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
 
                     // If contour is longer than the average height ignore.
-                     if (contour.br().y - contour.tl().y > this->avg_line_height * 2.1) continue;
+                    if (contour.br().y - contour.tl().y > this->avg_line_height * 2.1) continue;
 
                     bool is_component_above = component_belongs_to_above_region(*line, contour);
 
@@ -276,8 +266,7 @@ LineSegmentation::repair_lines()
                     if (!is_component_above) {
                         new_row = contour.tl().y;
                         line->min_row_position = min(line->min_row_position, new_row);
-                    }
-                    else {
+                    } else {
                         new_row = contour.br().y;
                         line->max_row_position = max(new_row, line->max_row_position);
                     }
@@ -295,8 +284,7 @@ LineSegmentation::repair_lines()
 }
 
 bool
-LineSegmentation::component_belongs_to_above_region(Line &line, Rect &contour)
-{
+LineSegmentation::component_belongs_to_above_region(Line &line, Rect &contour) {
     // Calculate probabilities.
     vector<int> probAbovePrimes(primes.size(), 0);
     vector<int> probBelowPrimes(primes.size(), 0);
@@ -313,9 +301,9 @@ LineSegmentation::component_belongs_to_above_region(Line &line, Rect &contour)
             contour_point.at<float>(0, 1) = i_contour;
 
             int newProbAbove = (int) ((line.above != nullptr) ? (line.above->bi_variate_gaussian_density(
-                contour_point.clone())) : 0);
+                    contour_point.clone())) : 0);
             int newProbBelow = (int) ((line.below != nullptr) ? (line.below->bi_variate_gaussian_density(
-                contour_point.clone())) : 0);
+                    contour_point.clone())) : 0);
 
             addPrimesToVector(newProbAbove, probAbovePrimes);
             addPrimesToVector(newProbBelow, probBelowPrimes);
@@ -338,8 +326,7 @@ LineSegmentation::component_belongs_to_above_region(Line &line, Rect &contour)
 }
 
 vector<cv::Mat>
-LineSegmentation::segment()
-{
+LineSegmentation::segment() {
     // Read image and process it.
     this->read_image();
     this->pre_process_image();
@@ -366,8 +353,7 @@ LineSegmentation::segment()
 }
 
 vector<cv::Mat>
-LineSegmentation::get_regions()
-{
+LineSegmentation::get_regions() {
     vector<cv::Mat> ret;
     for (auto region : this->line_regions) {
         ret.push_back(region->region.clone());
@@ -376,8 +362,7 @@ LineSegmentation::get_regions()
 }
 
 Chunk::Chunk(int i, int c, int w, cv::Mat m)
-    : valleys(vector<Valley *>()), peaks(vector<Peak>())
-{
+        : valleys(vector<Valley *>()), peaks(vector<Peak>()) {
     this->index = i;
     this->start_col = c;
     this->width = w;
@@ -389,8 +374,7 @@ Chunk::Chunk(int i, int c, int w, cv::Mat m)
 }
 
 void
-Chunk::calculate_histogram()
-{
+Chunk::calculate_histogram() {
     // Get the smoothed profile by applying a median filter of size 5.
     cv::Mat img_clone;
     cv::medianBlur(this->img, img_clone, 5);
@@ -413,8 +397,7 @@ Chunk::calculate_histogram()
                 white_spaces.push_back(current_white_count);
             }
             current_white_count = 0;
-        }
-        else {
+        } else {
             current_white_count++;
             if (current_height) {
                 lines_count++;
@@ -439,8 +422,7 @@ Chunk::calculate_histogram()
 }
 
 int
-Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
-{
+Chunk::find_peaks_valleys(map<int, Valley *> &map_valley) {
     this->calculate_histogram();
 
     // Detect Peaks.
@@ -451,9 +433,8 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
                 centre_val >= peaks.back().value) { // Try to get the largest peak in same region.
                 peaks.back().position = i;
                 peaks.back().value = centre_val;
-            }
-            else if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
-                centre_val < peaks.back().value) {}
+            } else if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
+                       centre_val < peaks.back().value) {}
             else {
                 peaks.push_back(Peak(i, centre_val));
             }
@@ -463,7 +444,7 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
     // Sort peaks by max value and remove the outliers (the ones with less foreground pixels).
     sort(peaks.begin(), peaks.end());
     peaks.resize(
-        lines_count + 1 <= peaks.size() ? (unsigned long) lines_count + 1 : peaks.size());
+            lines_count + 1 <= peaks.size() ? (unsigned long) lines_count + 1 : peaks.size());
 
     // Sort peaks by least position.
     sort(peaks.begin(), peaks.end(), Peak::comp);
@@ -473,11 +454,12 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
         pair<int, int> expected_valley_positions[4];
 
 
-        int min_position = (peaks[i - 1].position + peaks[i].position)/2;
+        int min_position = (peaks[i - 1].position + peaks[i].position) / 2;
 
         int min_value = this->histogram[min_position];
 
-        for (int j = (peaks[i - 1].position + avg_height / 2); j < (i == peaks.size() ? this->img.rows : peaks[i].position - avg_height - 30); j++) {
+        for (int j = (peaks[i - 1].position + avg_height / 2);
+             j < (i == peaks.size() ? this->img.rows : peaks[i].position - avg_height - 30); j++) {
 
             int valley_black_count = 0;
             for (int l = 0; l < this->img.cols; ++l) {
@@ -492,8 +474,7 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
                     min_position = min(this->img.rows - 10, min_position + avg_height);
                     j = this->img.rows;
                 }
-            }
-            else if (min_value != 0 && valley_black_count <= min_value) {
+            } else if (min_value != 0 && valley_black_count <= min_value) {
                 min_value = valley_black_count;
                 min_position = j;
             }
@@ -508,14 +489,12 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley)
 }
 
 Line::Line(int initial_valley_id)
-    : min_row_position(0), max_row_position(0), points(vector<Point>())
-{
+        : min_row_position(0), max_row_position(0), points(vector<Point>()) {
     valleys_ids.push_back(initial_valley_id);
 }
 
 void
-Line::generate_initial_points(int chunk_width, int img_width, map<int, Valley *> map_valley)
-{
+Line::generate_initial_points(int chunk_width, int img_width, map<int, Valley *> map_valley) {
     int c = 0, previous_row = 0;
 
     // Sort the valleys according to their chunk number.
@@ -553,7 +532,7 @@ Line::generate_initial_points(int chunk_width, int img_width, map<int, Valley *>
     // Add line points in the last chunks having no valleys.
     if (CHUNKS_NUMBER - 1 > map_valley[valleys_ids.back()]->chunk_index) {
         int chunk_index = map_valley[valleys_ids.back()]->chunk_index,
-            chunk_row = map_valley[valleys_ids.back()]->position;
+                chunk_row = map_valley[valleys_ids.back()]->position;
         for (int j = chunk_index * chunk_width + chunk_width; j < img_width; j++) {
             if (c++ == j)
                 points.push_back(Point(chunk_row, j));
@@ -562,40 +541,34 @@ Line::generate_initial_points(int chunk_width, int img_width, map<int, Valley *>
 }
 
 bool
-Line::comp_min_row_position(const Line *a, const Line *b)
-{
+Line::comp_min_row_position(const Line *a, const Line *b) {
     return a->min_row_position < b->min_row_position;
 }
 
 bool
-Peak::operator<(const Peak &p) const
-{
+Peak::operator<(const Peak &p) const {
     return value > p.value;
 }
 
 bool
-Peak::comp(const Peak &a, const Peak &b)
-{
+Peak::comp(const Peak &a, const Peak &b) {
     return a.position < b.position;
 }
 
 int Valley::ID = 0;
 
 bool
-Valley::comp(const Valley *a, const Valley *b)
-{
+Valley::comp(const Valley *a, const Valley *b) {
     return a->position < b->position;
 }
 
-Region::Region(Line *top, Line *bottom)
-{
+Region::Region(Line *top, Line *bottom) {
     this->top = top;
     this->bottom = bottom;
 }
 
 bool
-Region::update_region(Mat &binary_image, int region_id)
-{
+Region::update_region(Mat &binary_image, int region_id) {
     this->region_id = region_id;
 
     int min_region_row = row_offset = (top == nullptr) ? 0 : top->min_row_position;
@@ -604,15 +577,14 @@ Region::update_region(Mat &binary_image, int region_id)
     //ToDo @Samir55
     int start = min(min_region_row, max_region_row), end = max(min_region_row, max_region_row);
 
-    region = Mat::ones(end -start, binary_image.cols, CV_8U) * 255;
+    region = Mat::ones(end - start, binary_image.cols, CV_8U) * 255;
 
     // Fill region.
-    if (bottom != nullptr) {
-        for (int c = 0; c < binary_image.cols; c++) {
-            int start = ((top == nullptr) ? 0 : top->points[c].x);
-            for (int i = start; i < bottom->points[c].x; i++) {
-                region.at<uchar>(i - min_region_row, c) = binary_image.at<uchar>(i, c);
-            }
+    for (int c = 0; c < binary_image.cols; c++) {
+        int start = ((top == nullptr) ? 0 : top->points[c].x);
+        int end = ((bottom == nullptr) ? binary_image.rows - 1 : bottom->points[c].x);
+        for (int i = start; i < end; i++) {
+            region.at<uchar>(i - min_region_row, c) = binary_image.at<uchar>(i, c);
         }
     }
     calculate_mean();
@@ -622,8 +594,7 @@ Region::update_region(Mat &binary_image, int region_id)
 }
 
 void
-Region::calculate_mean()
-{
+Region::calculate_mean() {
     mean[0] = mean[1] = 0.0f;
     int n = 0;
     for (int i = 0; i < region.rows; i++) {
@@ -633,19 +604,16 @@ Region::calculate_mean()
             if (n == 0) {
                 n = n + 1;
                 mean = Vec2f(i + row_offset, j);
-            }
-            else {
+            } else {
                 mean = (n - 1.0) / n * mean + 1.0 / n * Vec2f(i + row_offset, j);
                 n = n + 1;
             }
         }
     }
-    // cout << "MEAN " << mean << endl;
 }
 
 void
-Region::calculate_covariance()
-{
+Region::calculate_covariance() {
     Mat covariance = Mat::zeros(2, 2, CV_32F);
 
     int n = 0; // Total number of considered points so far.
@@ -677,8 +645,7 @@ Region::calculate_covariance()
 }
 
 double
-Region::bi_variate_gaussian_density(Mat point)
-{
+Region::bi_variate_gaussian_density(Mat point) {
     point.at<float>(0, 0) -= this->mean[0];
     point.at<float>(0, 1) -= this->mean[1];
 
@@ -692,8 +659,7 @@ Region::bi_variate_gaussian_density(Mat point)
 }
 
 void
-LineSegmentation::sieve()
-{
+LineSegmentation::sieve() {
     not_primes_arr[0] = not_primes_arr[1] = 1;
     for (int i = 2; i < 1e5; ++i) {
         if (not_primes_arr[i]) continue;
@@ -706,8 +672,7 @@ LineSegmentation::sieve()
 }
 
 void
-LineSegmentation::addPrimesToVector(int n, vector<int> &probPrimes)
-{
+LineSegmentation::addPrimesToVector(int n, vector<int> &probPrimes) {
     for (int i = 0; i < primes.size(); ++i) {
         while (n % primes[i]) {
             n /= primes[i];
