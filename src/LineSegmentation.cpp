@@ -441,6 +441,20 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley) {
         }
     }
 
+    int peaks_average_values = 0;
+    vector<Peak> new_peaks;
+    for (auto peak : peaks) {
+        peaks_average_values += peak.value;
+    }
+    peaks_average_values /= max(1, int(peaks.size()));
+
+    for (auto peak : peaks) {
+        if (peak.value >= peaks_average_values/4) {
+            new_peaks.push_back(peak);
+        }
+    }
+    lines_count = int (new_peaks.size());
+    peaks = new_peaks;
     // Sort peaks by max value and remove the outliers (the ones with less foreground pixels).
     sort(peaks.begin(), peaks.end());
     peaks.resize(
