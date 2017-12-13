@@ -1,8 +1,5 @@
 #include "LineSegmentation.hpp"
 
-map<valley_id, Valley *> all_valleys_ids; ///< A Map from valley id to it's pointer.
-
-
 LineSegmentation::LineSegmentation(string path_of_image) {
     this->image_path = path_of_image;
 
