@@ -1,7 +1,8 @@
 #include "LineSegmentation.hpp"
 
-int main() {
-    string img_path = "../img/RR.jpg";
+int main(int argc, char *argv[]) {
+	cout << argv[1] << endl;
+    string img_path = argv[1];
     LineSegmentation line_segmentation(img_path);
     vector<cv::Mat> lines = line_segmentation.segment();
     // ToDo @Samir55 Remove.

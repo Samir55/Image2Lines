@@ -423,14 +423,14 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley) {
     this->calculate_histogram();
 
     // Detect Peaks.
-    for (int i = 1; i < this->histogram.size() - 1; i++) {
-        int left_val = this->histogram[i - 1], right_val = this->histogram[i], centre_val = this->histogram[i + 1];
-        if (centre_val > left_val && centre_val > right_val) { // Peak detected.
-            if (!peaks.empty() && i - peaks.back().position <= avg_height / 2 &&
+    for (int i = 1; i + 1< this->histogram.size(); i++) {
+        int left_val = this->histogram[i - 1], centre_val = this->histogram[i], right_val = this->histogram[i+1];
+        if (centre_val >= left_val && centre_val >= right_val) { // Peak detected.
+            if (!peaks.empty() && i - peaks.back().position <= avg_height/2 &&
                 centre_val >= peaks.back().value) { // Try to get the largest peak in same region.
                 peaks.back().position = i;
                 peaks.back().value = centre_val;
-            } else if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
+            } else if (peaks.size() > 0 && i - peaks.back().position <= avg_height/2 &&
                        centre_val < peaks.back().value) {}
             else {
                 peaks.push_back(Peak(i, centre_val));
