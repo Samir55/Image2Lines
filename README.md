@@ -1,4 +1,7 @@
 # Image 2 Lines
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b06e28bb75234b76838218c1cad86568)](https://www.codacy.com/app/Samir55/Image2Lines?utm_source=github.com&utm_medium=referral&utm_content=Samir55/Image2Lines&utm_campaign=badger)
+
 This is a module of our project for image processing course at Cairo university.
 
 **This is a working in progress project**.
