@@ -24,8 +24,30 @@ These are examples of the output produced from the current code.
 * Apply line drawing algorithm and make decissions about regions that hit the lines using Bivariate Gaussian Distribution.
 These is example of the output produced from the current code.
 ![](https://i.imgur.com/GMqsSxc.jpg)
-## Tools used:
-We'll use C++ and OpenCV.
+
+# Dependencies
+* OpenCV: 3.0 or newer.
+
+# Build
+```Console
+mkdir build
+cd build
+cmake ..
+make
+```
+# Usage
+```Console
+./Image2Lines the_path_to_the_img
+```
+the output will be:
+* N final lines, each line is named 'line_i.jpg' where i is the line number.
+* 'Initial_lines.jpg' : representing the initial lines drawn on the original image.
+* 'Final_lines.jpg' : representing the final lines drawn on the original image.
+* 'Contours.jpg' : represnting the detected contours.
+
+# TODO
+* Improve detecting peaks and valleys function.
+* Use a better binarization technique than the currrently used. (I will use my other repository named Binarization".
 
 ## Database used
 IAM database.
