@@ -12,6 +12,10 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/core/core.hpp"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #define CHUNKS_NUMBER 20
 #define CHUNKS_TO_BE_PROCESSED 5
 #define TEST_LINE_COLOR cv::Vec3b(255, 0, 255) // Magenta color.
