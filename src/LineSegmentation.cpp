@@ -143,7 +143,8 @@ LineSegmentation::get_initial_lines() {
         valleys_min_abs_dist += avg_height;
     }
     valleys_min_abs_dist /= number_of_heights;
-    this->avg_line_height = valleys_min_abs_dist;
+    cout << "Estimated avg line height " << valleys_min_abs_dist << endl;
+    this->predicted_line_height = valleys_min_abs_dist;
 
     // Start form the CHUNKS_TO_BE_PROCESSED chunk.
     for (int i = CHUNKS_TO_BE_PROCESSED - 1; i >= 0; i--) {
@@ -209,6 +210,8 @@ LineSegmentation::generate_regions() {
     r->update_region(this->binary_img, 0);
     this->initial_lines[0]->above = r;
     this->line_regions.push_back(r);
+    if (r->height < this->predicted_line_height * 2.5)
+        this->avg_line_height += r->height;
 
     // Add rest of regions.
     for (int i = 0; i < this->initial_lines.size(); ++i) {
@@ -226,8 +229,16 @@ LineSegmentation::generate_regions() {
         if (bottom_line != nullptr)
             bottom_line->above = r;
 
-        if (!res)
+        if (!res) {
             this->line_regions.push_back(r);
+            if (r->height < this->predicted_line_height * 2.5)
+                this->avg_line_height += r->height;
+        }
+    }
+
+    if (this->line_regions.size() > 0) {
+        this->avg_line_height /= this->line_regions.size();
+        cout << "Avg line height is " << this->avg_line_height << endl;
     }
 }
 
@@ -276,7 +287,7 @@ LineSegmentation::repair_lines() {
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
 
                     // If contour is longer than the average height ignore.
-                    if (contour.br().y - contour.tl().y > this->avg_line_height * 2.1) continue;
+                    if (contour.br().y - contour.tl().y > this->avg_line_height * 0.9) continue;
 
                     bool is_component_above = component_belongs_to_above_region(*line, contour);
 
@@ -600,6 +611,7 @@ Valley::comp(const Valley *a, const Valley *b) {
 Region::Region(Line *top, Line *bottom) {
     this->top = top;
     this->bottom = bottom;
+    this->height = 0;
 }
 
 bool
@@ -618,6 +630,11 @@ Region::update_region(Mat &binary_image, int region_id) {
     for (int c = 0; c < binary_image.cols; c++) {
         int start = ((top == nullptr) ? 0 : top->points[c].x);
         int end = ((bottom == nullptr) ? binary_image.rows - 1 : bottom->points[c].x);
+
+        // Calculate region height
+        if (end > start)
+            this->height = max(this->height, end - start);
+
         for (int i = start; i < end; i++) {
             region.at<uchar>(i - min_region_row, c) = binary_image.at<uchar>(i, c);
         }

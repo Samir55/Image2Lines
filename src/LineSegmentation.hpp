@@ -130,10 +130,8 @@ private:
     ///< Region top boundaries;
     Line *bottom;
     ///< Region bottom boundaries;
-    int start_row;
-    ///<
-    int end_row;
-    ///<
+    int height;
+    ///< Region height (the maximum distance between the above and bottom line)
     int row_offset;
     ///< The offset of each col to the original image matrix.
     cv::Mat covariance;
@@ -251,8 +249,8 @@ private:
     /// The handwritten components found in the binary image.
     int avg_line_height;
     ///< The average height of lines in the image.
-    int avg_space_height;
-    ///< The average height of white spaces in the image.
+    int predicted_line_height;
+    ///< The predicted height of lines in the image.
     int chunk_width;
     ///< width of the chunk.
     // ToDo @Samir55 add CHUNKS_TO_BE_PROCESSED when needed.
