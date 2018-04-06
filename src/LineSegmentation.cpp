@@ -3,7 +3,7 @@
 LineSegmentation::LineSegmentation(string path_of_image) {
     this->image_path = path_of_image;
 
-    // Initialize Sieve ToDo @Samir55.
+    // Initialize Sieve.
     sieve();
 }
 
@@ -167,7 +167,7 @@ LineSegmentation::get_initial_lines() {
 }
 
 void
-LineSegmentation::show_lines(string path) {
+LineSegmentation::save_image_with_lines(string path) {
     cv::Mat img_clone = this->color_img.clone();
 
     for (auto line : initial_lines) {
@@ -187,6 +187,14 @@ LineSegmentation::show_lines(string path) {
         }
     }
     cv::imwrite(path, img_clone);
+}
+
+void
+LineSegmentation::save_lines_to_file(const vector<cv::Mat> &lines, string path) {
+    int idx = 0;
+    for (auto m : lines) {
+        imwrite(path + "Line " + to_string(idx++) + ".jpg", m);
+    }
 }
 
 void
@@ -227,19 +235,26 @@ void
 LineSegmentation::repair_lines() {
     // Loop over the regions.
     for (Line *line : initial_lines) {
+        map<int, bool> column_processed = map<int, bool>();
+
         for (int i = 0; i < line->points.size(); i++) {
             Point &point = line->points[i];
 
             int x = (line->points[i]).x, y = (line->points[i]).y;
 
             // Check for vertical line intersection
+            // In lines, we don't save all the vertical points we save only the start point and the end point.
+            // So in line->points all we save is the horizontal points so, we know there exists a vertical line by
+            // comparing the point[i].x (row) with point[i-1].x (row).
             if (this->binary_img.at<uchar>(point.x, point.y) == 255) {
                 if (i == 0) continue;
                 bool black_found = false;
 
                 if (line->points[i - 1].x != line->points[i].x) {
+                    // Means the points are in different rows (a vertical line).
                     int min_row = min(line->points[i - 1].x, line->points[i].x);
                     int max_row = max(line->points[i - 1].x, line->points[i].x);
+
                     for (int j = min_row; j <= max_row && !black_found; ++j) {
                         if (this->binary_img.at<uchar>(j, line->points[i - 1].y) == 0) {
                             x = j, y = line->points[i - 1].y;
@@ -249,6 +264,12 @@ LineSegmentation::repair_lines() {
                 }
                 if (!black_found) continue;
             }
+
+            // Ignore it's previously processed
+            if (column_processed[y]) continue;
+
+            // Mark column as processed.
+            column_processed[y] = true;
 
             for (auto contour : this->contours) {
                 // Check line & contour intersection
@@ -336,15 +357,18 @@ LineSegmentation::segment() {
 
     // Get initial lines.
     this->get_initial_lines();
-    this->show_lines("Initial_Lines.jpg");
+    this->save_image_with_lines("Initial_Lines.jpg");
 
     // Get initial line regions.
     this->generate_regions();
 
     // Repair initial lines and generate the final line regions.
     this->repair_lines();
+
+    // Generate the final line regions.
     this->generate_regions();
-    this->show_lines("Final_Lines.jpg");
+
+    this->save_image_with_lines("Final_Lines.jpg");
 
     return this->get_regions();
 }
@@ -423,14 +447,14 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley) {
     this->calculate_histogram();
 
     // Detect Peaks.
-    for (int i = 1; i + 1< this->histogram.size(); i++) {
-        int left_val = this->histogram[i - 1], centre_val = this->histogram[i], right_val = this->histogram[i+1];
+    for (int i = 1; i + 1 < this->histogram.size(); i++) {
+        int left_val = this->histogram[i - 1], centre_val = this->histogram[i], right_val = this->histogram[i + 1];
         if (centre_val >= left_val && centre_val >= right_val) { // Peak detected.
-            if (!peaks.empty() && i - peaks.back().position <= avg_height/2 &&
+            if (!peaks.empty() && i - peaks.back().position <= avg_height / 2 &&
                 centre_val >= peaks.back().value) { // Try to get the largest peak in same region.
                 peaks.back().position = i;
                 peaks.back().value = centre_val;
-            } else if (peaks.size() > 0 && i - peaks.back().position <= avg_height/2 &&
+            } else if (peaks.size() > 0 && i - peaks.back().position <= avg_height / 2 &&
                        centre_val < peaks.back().value) {}
             else {
                 peaks.push_back(Peak(i, centre_val));
@@ -446,11 +470,11 @@ Chunk::find_peaks_valleys(map<int, Valley *> &map_valley) {
     peaks_average_values /= max(1, int(peaks.size()));
 
     for (auto peak : peaks) {
-        if (peak.value >= peaks_average_values/4) {
+        if (peak.value >= peaks_average_values / 4) {
             new_peaks.push_back(peak);
         }
     }
-    lines_count = int (new_peaks.size());
+    lines_count = int(new_peaks.size());
     peaks = new_peaks;
     // Sort peaks by max value and remove the outliers (the ones with less foreground pixels).
     sort(peaks.begin(), peaks.end());

@@ -5,10 +5,8 @@ int main(int argc, char *argv[]) {
     string img_path = argv[1];
     LineSegmentation line_segmentation(img_path);
     vector<cv::Mat> lines = line_segmentation.segment();
-    // ToDo @Samir55 Remove.
-    int idx = 0;
-    for(auto m : lines) {
-        imwrite("Line " + to_string(idx++) + ".jpg", m);
-    }
+
+    // Save lines to path.
+    line_segmentation.save_lines_to_file(lines, "");
     return 0;
 }

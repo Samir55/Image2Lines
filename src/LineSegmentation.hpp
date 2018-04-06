@@ -26,12 +26,13 @@ using namespace cv;
 using namespace std;
 
 class LineSegmentation;
+
 class Region;
+
 class Valley;
 
 /// A class representing the separator between line regions.
-class Line
-{
+class Line {
     friend class LineSegmentation;
 
     friend class Region;
@@ -62,16 +63,14 @@ private:
 };
 
 /// A class representing the peaks (local maximum points in the histogram).
-class Peak
-{
+class Peak {
 public:
     int position;
     ///< The row position.
     int value;
     ///< The number of foreground pixels.
 
-    Peak()
-    {}
+    Peak() {}
 
     Peak(int p, int v)
         : position(p), value(v)
@@ -91,8 +90,7 @@ public:
 };
 
 /// A class representing the valleys (local minimum points in the histogram)
-class Valley
-{
+class Valley {
 public:
     static int ID;
     ///< Next available id.
@@ -120,8 +118,7 @@ public:
 };
 
 /// A class representing the line regions.
-class Region
-{
+class Region {
     friend class LineSegmentation;
 
 private:
@@ -167,8 +164,7 @@ private:
 };
 
 /// Image Chunk.
-class Chunk
-{
+class Chunk {
     friend class LineSegmentation;
 
     /// Valleys and peaks detection in this image chunk.
@@ -208,14 +204,14 @@ private:
 };
 
 /// Line Segmentation class.
-class LineSegmentation
-{
+class LineSegmentation {
 private:
     bool not_primes_arr[100007];
     vector<int> primes;
 
     void
     sieve();
+
     void
     addPrimesToVector(int, vector<int> &);
 
@@ -227,6 +223,11 @@ public:
     vector<cv::Mat>
     segment();
 
+    /// Save current line regions returned from get_regions() or segment() functions in jpg files.
+    /// \param lines
+    /// \param path
+    void save_lines_to_file(const vector<cv::Mat> &lines, string path);
+
 private:
     string image_path;
     ///< Path of the image.
@@ -236,15 +237,15 @@ private:
     ///< The grey image.
     cv::Mat binary_img;
     ///< The preprocessed image.
-    vector<Chunk*> chunks;
+    vector<Chunk *> chunks;
     ///< The image chunks.
     map<int, Chunk *> chunk_map;
     ///< Map the Chunk id and its corresponding Chunk pointer
     map<int, Valley *> map_valley;
     ///< Map the Valley id and its corresponding Valley pointer.
-    vector<Line*> initial_lines;
+    vector<Line *> initial_lines;
     ///< The initial lines.
-    vector<Region*> line_regions;
+    vector<Region *> line_regions;
     ///< The regions of all found initial lines in the image.
     vector<Rect> contours;
     /// The handwritten components found in the binary image.
@@ -295,13 +296,13 @@ private:
     /// Draw the lines on the original color image for debugging.
     /// \param path string the path of the output image.
     void
-    show_lines(string path);
+    save_image_with_lines(string path);
 
     /// Connect the nearest valleys found in image chunks to form an initial line in a recursive manner.
     /// This function is called by find_initial_lines.
     /// \param i integer The index of the chunk.
     /// \param current_valley Valley The current valley.
     /// \return Line a candidate(initial line)
-    Line*
+    Line *
     connect_valleys(int i, Valley *current_valley, Line *line, int valleys_min_abs_dist);
 };
