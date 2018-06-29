@@ -15,10 +15,10 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-
+//In the paper is explained that every chunk have a 5% of the width
 #define CHUNKS_NUMBER 20
 #define CHUNKS_TO_BE_PROCESSED 5
-#define TEST_LINE_COLOR cv::Vec3b(255, 0, 255) // Magenta color.
+#define TEST_LINE_COLOR cv::Vec3b(0, 0, 255) // Magenta color.
 
 typedef int valley_id;
 
@@ -30,7 +30,7 @@ class LineSegmentation;
 class Region;
 
 class Valley;
-
+extern string OUT_PATH;
 /// A class representing the separator between line regions.
 class Line {
     friend class LineSegmentation;
@@ -213,8 +213,11 @@ private:
     void
     addPrimesToVector(int, vector<int> &);
 
+    //first color index for identify regions from up to down
+    int redStart = 20;
+
 public:
-    LineSegmentation(string path_of_image);
+    LineSegmentation(string path_of_image, string out);
 
     /// Generate the lines found in the saved image.
     /// \return vector<cv::Mat> a vector containing each line as a 2D mat.
@@ -224,9 +227,18 @@ public:
     /// Save current line regions returned from get_regions() or segment() functions in jpg files.
     /// \param lines
     /// \param path
-    void save_lines_to_file(const vector<cv::Mat> &lines, string path);
+    void save_lines_to_file(const vector<cv::Mat> &lines);
+
+    //document image labelling
+    void labelImage(string path);
+    //label a section of the image from y-pointactualLine to y1 pointnextLine
+    void
+    labelComponent(const vector<cv::Point> &pointnextLine, const vector<cv::Point> &pointactualLine, cv::Mat &img_clone);
+
+
 
 private:
+    string OUT_PATH;
     string image_path;
     ///< Path of the image.
     cv::Mat color_img;

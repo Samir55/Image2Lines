@@ -25,6 +25,8 @@ These are examples of the output produced from the current code.
 These is example of the output produced from the current code.
 ![](https://i.imgur.com/GMqsSxc.jpg)
 
+This is an example of the output as labeled components for MatchScore evaluation.
+![](https://i.imgur.com/ZDrO8G5.png)
 # Dependencies
 * OpenCV: 3.0 or newer.
 
@@ -34,7 +36,7 @@ mkdir build
 cd build
 cmake ..
 make
-./Image2Lines the_path_to_the_img
+./Image2Lines the_path_to_the_img the_path_to_the_output_directory
 ```
 the output will be:
 * N final lines, each line is named 'line_i.jpg' where i is the line number.
