@@ -1,8 +1,8 @@
 #include "LineSegmentation.hpp"
 
-LineSegmentation::LineSegmentation(string path_of_image) {
+LineSegmentation::LineSegmentation(string path_of_image, string out) {
     this->image_path = path_of_image;
-
+    this->OUT_PATH   = out;
     // Initialize Sieve.
     sieve();
 }
@@ -23,7 +23,7 @@ LineSegmentation::pre_process_image() {
 
     // OTSU threshold and Binarization.
     cv::threshold(smoothed_img, binary_img, 0.0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
-    imwrite("Binary_image.jpg", this->binary_img);
+    imwrite(OUT_PATH+"Binary_image.jpg", this->binary_img);
 }
 
 void
@@ -78,7 +78,7 @@ LineSegmentation::find_contours() {
     // ToDo @Samir55 Remove.
     for (size_t i = 0; i < merged_rectangles.size(); i++)
         rectangle(drawing, merged_rectangles[i].tl(), merged_rectangles[i].br(), TEST_LINE_COLOR, 2, 8, 0);
-    cv::imwrite("contours.jpg", drawing);
+    cv::imwrite(OUT_PATH+"contours.jpg", drawing);
     this->contours = merged_rectangles;
 }
 
@@ -95,7 +95,7 @@ LineSegmentation::generate_chunks() {
                                                                                                chunk_width)));
         this->chunks.push_back(c);
 
-        imwrite("Chunk" + to_string(i_chunk) + ".jpg", this->chunks.back()->img);
+        imwrite(OUT_PATH+"Chunk" + to_string(i_chunk) + ".jpg", this->chunks.back()->img);
 
         start_pixel += chunk_width;
     }
@@ -173,28 +173,76 @@ LineSegmentation::save_image_with_lines(string path) {
 
     for (auto line : initial_lines) {
         int last_row = -1;
-
+        //std::cout<<"new line"<<endl;
         for (auto point : line->points) {
             img_clone.at<Vec3b>(point.x, point.y) = TEST_LINE_COLOR;
-
+            //std::cout<<" ii="+std::to_string(point.y)+" jj="+std::to_string(point.x)<<endl;
+                
             // Check and draw vertical lines if found.
             if (last_row != -1 && point.x != last_row) {
                 for (int i = min(last_row, point.x); i < max(last_row, point.x); i++) {
                     img_clone.at<Vec3b>(i, point.y) = TEST_LINE_COLOR;
+                    //std::cout<<" i="+std::to_string(point.y)+" j="+std::to_string(i)<<endl;
                 }
             }
 
             last_row = point.x;
         }
     }
+    //cvtColor(img_clone,img_clone,CV_8UC3);
     cv::imwrite(path, img_clone);
 }
 
 void
-LineSegmentation::save_lines_to_file(const vector<cv::Mat> &lines, string path) {
+LineSegmentation::save_lines_to_file(const vector<cv::Mat> &lines) {
     int idx = 0;
     for (auto m : lines) {
-        imwrite(path + "Line " + to_string(idx++) + ".jpg", m);
+        imwrite(OUT_PATH + "Line_" + to_string(idx++) + ".jpg", m);
+    }
+}
+
+void
+LineSegmentation::labelImage(string path) {
+    cv::Mat img_clone = this->color_img.clone();
+    vector<cv::Point> pointactualLine(initial_lines[0]->points.size());
+    vector<cv::Point> pointnextLine;
+    //initialize line at 0,0
+    for(int i = 0; i<pointactualLine.size(); i++)
+        pointactualLine[i] = cv::Point(0,0);
+
+    for (int indexLine = 0; indexLine<initial_lines.size(); indexLine++) {
+        pointnextLine   = initial_lines[indexLine]->points;
+
+        this->labelComponent(pointnextLine, pointactualLine, img_clone);
+
+        pointactualLine = pointnextLine;
+    }
+
+    //for label last text line
+    for(int i = 0; i<pointnextLine.size(); i++)
+        pointnextLine[i] = cv::Point(this->color_img.cols, 0);
+
+    this->labelComponent(pointnextLine, pointactualLine, img_clone);
+    cv::imwrite(path, img_clone);
+}
+
+void
+LineSegmentation::labelComponent(const std::vector<cv::Point> &pointnextLine, const vector<cv::Point> &pointactualLine, cv::Mat &img_clone){
+    //for random color generation
+    int max = 220;
+    int min = 30;
+    cv::Vec3b randomColor = cv::Vec3b(rand() % max + min,rand() % max + min, redStart);
+    
+    for (int indexPoint = 0; indexPoint < pointactualLine.size(); indexPoint++) 
+    {
+        auto nextPoint = pointnextLine  [indexPoint];
+        auto point     = pointactualLine[indexPoint];
+
+        for(int x_ = point.x; x_<nextPoint.x; x_++) {
+            if(img_clone.at<Vec3b>(x_, indexPoint)[2]<125)
+                img_clone.at<Vec3b>(x_, indexPoint) = randomColor;
+        }
+        redStart+=5;
     }
 }
 
@@ -228,7 +276,6 @@ LineSegmentation::generate_regions() {
 
         if (bottom_line != nullptr)
             bottom_line->above = r;
-
         if (!res) {
             this->line_regions.push_back(r);
             if (r->height < this->predicted_line_height * 2.5)
@@ -247,12 +294,10 @@ LineSegmentation::repair_lines() {
     // Loop over the regions.
     for (Line *line : initial_lines) {
         map<int, bool> column_processed = map<int, bool>();
-
         for (int i = 0; i < line->points.size(); i++) {
             Point &point = line->points[i];
 
             int x = (line->points[i]).x, y = (line->points[i]).y;
-
             // Check for vertical line intersection
             // In lines, we don't save all the vertical points we save only the start point and the end point.
             // So in line->points all we save is the horizontal points so, we know there exists a vertical line by
@@ -281,7 +326,6 @@ LineSegmentation::repair_lines() {
 
             // Mark column as processed.
             column_processed[y] = true;
-
             for (auto contour : this->contours) {
                 // Check line & contour intersection
                 if (y >= contour.tl().x && y <= contour.br().x && x >= contour.tl().y && x <= contour.br().y) {
@@ -299,7 +343,6 @@ LineSegmentation::repair_lines() {
                         new_row = contour.br().y;
                         line->max_row_position = max(new_row, line->max_row_position);
                     }
-
                     for (int k = contour.tl().x; k < contour.tl().x + contour.width; k++) {
                         line->points[k].x = new_row;
                     }
@@ -368,7 +411,7 @@ LineSegmentation::segment() {
 
     // Get initial lines.
     this->get_initial_lines();
-    this->save_image_with_lines("Initial_Lines.jpg");
+    this->save_image_with_lines(OUT_PATH+"Initial_Lines.jpg");
 
     // Get initial line regions.
     this->generate_regions();
@@ -379,7 +422,10 @@ LineSegmentation::segment() {
     // Generate the final line regions.
     this->generate_regions();
 
-    this->save_image_with_lines("Final_Lines.jpg");
+    this->save_image_with_lines(OUT_PATH+"Final_Lines.bmp");
+
+    //is neccesary to use bitmap or tiff for componente labeling
+    this->labelImage(OUT_PATH+"labels.bmp");
 
     return this->get_regions();
 }
